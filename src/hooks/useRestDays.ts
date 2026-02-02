@@ -88,9 +88,40 @@ export const useRestDays = (groupId: string | null) => {
     }
   };
 
+  const cancelRestDay = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!user || !groupId) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { error } = await supabase
+        .from('rest_days')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('group_id', groupId)
+        .eq('rest_date', today);
+
+      if (error) throw error;
+
+      setInfo(prev => ({
+        ...prev,
+        restDaysRemaining: prev.restDaysRemaining + 1,
+        hasRestedToday: false,
+      }));
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error canceling rest day:', error);
+      return { success: false, error: error.message || 'Failed to cancel rest day' };
+    }
+  };
+
   return {
     ...info,
     takeRestDay,
+    cancelRestDay,
     refetch: fetchRestDayInfo,
   };
 };
