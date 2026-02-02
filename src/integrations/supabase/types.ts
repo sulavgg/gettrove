@@ -378,6 +378,10 @@ export type Database = {
           name: string
         }[]
       }
+      update_user_streak: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       habit_type:

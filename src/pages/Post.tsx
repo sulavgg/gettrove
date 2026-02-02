@@ -183,9 +183,10 @@ const Post = () => {
       setUploadProgress(60);
 
       // Get signed URL (bucket is now private for security)
+      // Using 1-year expiry for better UX with persistent content
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('checkin-photos')
-        .createSignedUrl(fileName, 3600 * 24 * 7); // 7 day expiry
+        .createSignedUrl(fileName, 3600 * 24 * 365); // 1 year expiry
 
       if (urlError) throw urlError;
       const photoUrl = signedUrlData?.signedUrl;
@@ -202,48 +203,12 @@ const Post = () => {
           caption: caption.trim() || null,
         });
 
-        // Update streak
-        const today = new Date().toISOString().split('T')[0];
-        const { data: existingStreak } = await supabase
-          .from('streaks')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('group_id', groupId)
-          .single();
-
-        if (existingStreak) {
-          const lastCheckin = existingStreak.last_checkin_date;
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-          let newStreak = 1;
-          if (lastCheckin === yesterdayStr || lastCheckin === today) {
-            // Continuing streak or already posted today
-            newStreak = lastCheckin === today 
-              ? existingStreak.current_streak 
-              : existingStreak.current_streak + 1;
-          }
-
-          await supabase
-            .from('streaks')
-            .update({
-              current_streak: newStreak,
-              longest_streak: Math.max(newStreak, existingStreak.longest_streak),
-              total_checkins: existingStreak.total_checkins + 1,
-              last_checkin_date: today,
-            })
-            .eq('id', existingStreak.id);
-        } else {
-          await supabase.from('streaks').insert({
-            user_id: user.id,
-            group_id: groupId,
-            current_streak: 1,
-            longest_streak: 1,
-            total_checkins: 1,
-            last_checkin_date: today,
-          });
-        }
+        // Update streak atomically using database function
+        // This prevents race conditions when posting to multiple groups
+        await supabase.rpc('update_user_streak', {
+          p_user_id: user.id,
+          p_group_id: groupId,
+        });
       }
 
       setUploadProgress(100);
