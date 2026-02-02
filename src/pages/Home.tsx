@@ -21,6 +21,7 @@ interface GroupData {
   member_count: number;
   current_streak: number;
   posted_today: boolean;
+  rested_today: boolean;
   posted_today_count: number;
   streak_broken: boolean;
 }
@@ -105,6 +106,16 @@ const Home = () => {
             .gte('created_at', todayISO)
             .limit(1);
 
+          // User's rest day today
+          const todayDate = today.toISOString().split('T')[0];
+          const { data: userRestDay } = await supabase
+            .from('rest_days')
+            .select('id')
+            .eq('group_id', group.id)
+            .eq('user_id', user.id)
+            .eq('rest_date', todayDate)
+            .limit(1);
+
           // User's streak
           const { data: streakData } = await supabase
             .from('streaks')
@@ -125,6 +136,7 @@ const Home = () => {
             member_count: memberCount || 0,
             current_streak: streakData?.current_streak || 0,
             posted_today: !!userCheckin?.length,
+            rested_today: !!userRestDay?.length,
             posted_today_count: postedTodayCount || 0,
             streak_broken: streakBrokenRecently,
           };
@@ -184,7 +196,7 @@ const Home = () => {
     }
   };
 
-  const hasUnpostedGroups = groups.some((g) => !g.posted_today);
+  const hasUnpostedGroups = groups.some((g) => !g.posted_today && !g.rested_today);
 
   // Weekly Recap Slides
   if (showRecapSlides && latestRecap) {
@@ -279,6 +291,7 @@ const Home = () => {
                 customHabit={group.custom_habit}
                 currentStreak={group.current_streak}
                 postedToday={group.posted_today}
+                restedToday={group.rested_today}
                 memberCount={group.member_count}
                 postedTodayCount={group.posted_today_count}
                 streakBroken={group.streak_broken}

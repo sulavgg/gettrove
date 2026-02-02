@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Camera, Image, X, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Camera, Image, X, Loader2, Check, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,6 +9,8 @@ import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CameraCapture } from '@/components/camera/CameraCapture';
+import { RestDayButton } from '@/components/RestDayButton';
+import { useRestDays } from '@/hooks/useRestDays';
 
 interface GroupOption {
   id: string;
@@ -260,6 +262,153 @@ const Post = () => {
 
   const availableGroups = groups.filter((g) => !g.already_posted);
 
+  // Component for group selection with rest day options
+  const PostGroupSelection = ({
+    availableGroups,
+    selectedGroups,
+    toggleGroup,
+    onOpenCamera,
+    onOpenGallery,
+  }: {
+    availableGroups: GroupOption[];
+    selectedGroups: string[];
+    toggleGroup: (id: string) => void;
+    onOpenCamera: () => void;
+    onOpenGallery: () => void;
+  }) => {
+    const { user } = useAuth();
+
+    return (
+      <div className="max-w-md mx-auto">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+          Select groups to post to
+        </h2>
+
+        <div className="space-y-3 mb-8">
+          {availableGroups.map((group) => {
+            const habit = getHabitDisplay(group.habit_type, group.custom_habit);
+            const isSelected = selectedGroups.includes(group.id);
+
+            return (
+              <GroupSelectionItem
+                key={group.id}
+                group={group}
+                habit={habit}
+                isSelected={isSelected}
+                onToggle={() => toggleGroup(group.id)}
+              />
+            );
+          })}
+        </div>
+
+        {selectedGroups.length > 0 && (
+          <div className="space-y-3">
+            <Button
+              onClick={onOpenCamera}
+              className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow gap-2"
+            >
+              <Camera className="w-5 h-5" />
+              Take Photo
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onOpenGallery}
+              className="w-full h-12 gap-2"
+            >
+              <Image className="w-5 h-5" />
+              Upload from Gallery
+            </Button>
+          </div>
+        )}
+
+        {/* Rest day section */}
+        {selectedGroups.length === 0 && availableGroups.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-border">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
+              <Moon className="w-4 h-4" />
+              Or take a rest day
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Need a break? Use a rest day to preserve your streak without posting. You get 2 rest days per week per group.
+            </p>
+            <div className="space-y-2">
+              {availableGroups.map((group) => (
+                <RestDayItem key={group.id} group={group} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Individual group selection item
+  const GroupSelectionItem = ({
+    group,
+    habit,
+    isSelected,
+    onToggle,
+  }: {
+    group: GroupOption;
+    habit: { emoji: string; label: string };
+    isSelected: boolean;
+    onToggle: () => void;
+  }) => {
+    return (
+      <button
+        onClick={onToggle}
+        className={cn(
+          'w-full flex items-center gap-3 p-4 rounded-xl border transition-all',
+          isSelected
+            ? 'bg-primary/10 border-primary'
+            : 'bg-card border-border hover:border-primary/50'
+        )}
+      >
+        <Checkbox
+          checked={isSelected}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+        <span className="text-xl">{habit.emoji}</span>
+        <div className="flex-1 text-left">
+          <p className="font-medium text-foreground">{group.name}</p>
+          <p className="text-sm text-muted-foreground">{habit.label}</p>
+        </div>
+      </button>
+    );
+  };
+
+  // Rest day item for a single group
+  const RestDayItem = ({ group }: { group: GroupOption }) => {
+    const { restDaysRemaining, hasRestedToday, loading, takeRestDay } = useRestDays(group.id);
+    const habit = getHabitDisplay(group.habit_type, group.custom_habit);
+
+    if (loading) {
+      return (
+        <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
+        <span className="text-lg">{habit.emoji}</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-foreground text-sm truncate">{group.name}</p>
+        </div>
+        <RestDayButton
+          groupName={group.name}
+          restDaysRemaining={restDaysRemaining}
+          hasRestedToday={hasRestedToday}
+          alreadyPosted={false}
+          onTakeRestDay={takeRestDay}
+          variant="compact"
+        />
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -387,70 +536,22 @@ const Post = () => {
       </div>
 
       {step === 'select' && (
-        <div className="max-w-md mx-auto">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-            Select groups to post to
-          </h2>
-
-          <div className="space-y-3 mb-8">
-            {availableGroups.map((group) => {
-              const habit = getHabitDisplay(group.habit_type, group.custom_habit);
-              const isSelected = selectedGroups.includes(group.id);
-
-              return (
-                <button
-                  key={group.id}
-                  onClick={() => toggleGroup(group.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-4 rounded-xl border transition-all',
-                    isSelected
-                      ? 'bg-primary/10 border-primary'
-                      : 'bg-card border-border hover:border-primary/50'
-                  )}
-                >
-                  <Checkbox
-                    checked={isSelected}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <span className="text-xl">{habit.emoji}</span>
-                  <div className="flex-1 text-left">
-                    <p className="font-medium text-foreground">{group.name}</p>
-                    <p className="text-sm text-muted-foreground">{habit.label}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedGroups.length > 0 && (
-            <div className="space-y-3">
-              <Button
-                onClick={handleOpenCamera}
-                className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow gap-2"
-              >
-                <Camera className="w-5 h-5" />
-                Take Photo
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-12 gap-2"
-              >
-                <Image className="w-5 h-5" />
-                Upload from Gallery
-              </Button>
-            </div>
-          )}
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-        </div>
+        <PostGroupSelection
+          availableGroups={availableGroups}
+          selectedGroups={selectedGroups}
+          toggleGroup={toggleGroup}
+          onOpenCamera={handleOpenCamera}
+          onOpenGallery={() => fileInputRef.current?.click()}
+        />
       )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
       {step === 'caption' && photoPreview && (
         <div className="max-w-md mx-auto">

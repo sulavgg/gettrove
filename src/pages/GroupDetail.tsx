@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Settings, Loader2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Settings, Loader2, MessageCircle, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,9 +8,11 @@ import { CheckInCard } from '@/components/CheckInCard';
 import { EmptyState } from '@/components/EmptyState';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { FAB } from '@/components/ui/FAB';
+import { RestDayButton } from '@/components/RestDayButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useRestDays } from '@/hooks/useRestDays';
 
 interface GroupInfo {
   id: string;
@@ -25,6 +27,7 @@ interface Member {
   name: string;
   photo: string | null;
   posted_today: boolean;
+  rested_today: boolean;
   current_streak: number;
   checkin?: {
     id: string;
@@ -122,6 +125,16 @@ const GroupDetail = () => {
         .gte('created_at', todayISO)
         .order('created_at', { ascending: false });
 
+      // Get today's rest days
+      const todayDate = today.toISOString().split('T')[0];
+      const { data: restDays } = await supabase
+        .from('rest_days')
+        .select('user_id')
+        .eq('group_id', groupData.id)
+        .eq('rest_date', todayDate);
+
+      const restedTodaySet = new Set(restDays?.map((r) => r.user_id) || []);
+
       // Get reaction counts
       const checkinIds = checkins?.map((c) => c.id) || [];
       const { data: reactions } = await supabase
@@ -146,6 +159,7 @@ const GroupDetail = () => {
           name: profile.name,
           photo: profile.profile_photo_url,
           posted_today: !!checkin,
+          rested_today: restedTodaySet.has(profile.user_id),
           current_streak: streak?.current_streak || 0,
           checkin: checkin
             ? {
@@ -265,15 +279,47 @@ const GroupDetail = () => {
               </div>
             )}
 
+            {/* Resting Today */}
+            {members.filter((m) => m.rested_today && !m.posted_today).length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Moon className="w-4 h-4" /> Resting Today
+                </h2>
+                <div className="space-y-2">
+                  {members
+                    .filter((m) => m.rested_today && !m.posted_today)
+                    .map((member) => (
+                      <div
+                        key={member.user_id}
+                        className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
+                      >
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={member.photo || undefined} />
+                          <AvatarFallback className="bg-muted text-muted-foreground">
+                            {member.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{member.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            😴 Taking a rest day • 🔥 {member.current_streak}-day streak safe
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Hasn't Posted Yet */}
-            {members.filter((m) => !m.posted_today).length > 0 && (
+            {members.filter((m) => !m.posted_today && !m.rested_today).length > 0 && (
               <div>
                 <h2 className="text-sm font-semibold text-warning uppercase tracking-wide mb-3 flex items-center gap-2">
                   <span>⏰</span> Hasn't Posted Yet
                 </h2>
                 <div className="space-y-2">
                   {members
-                    .filter((m) => !m.posted_today)
+                    .filter((m) => !m.posted_today && !m.rested_today)
                     .map((member) => (
                       <div
                         key={member.user_id}
