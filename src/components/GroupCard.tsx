@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ChevronRight, AlertTriangle, CheckCircle, Moon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { getHabitDisplay, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ interface GroupCardProps {
   customHabit?: string | null;
   currentStreak: number;
   postedToday: boolean;
+  restedToday?: boolean;
   memberCount: number;
   postedTodayCount: number;
   streakBroken?: boolean;
@@ -23,6 +24,7 @@ export const GroupCard = ({
   customHabit,
   currentStreak,
   postedToday,
+  restedToday,
   memberCount,
   postedTodayCount,
   streakBroken,
@@ -72,6 +74,11 @@ export const GroupCard = ({
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10">
                 <CheckCircle className="w-4 h-4 text-success" />
                 <span className="text-xs font-medium text-success uppercase">Done</span>
+              </div>
+            ) : restedToday ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted">
+                <Moon className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase">Resting</span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 animate-pulse">

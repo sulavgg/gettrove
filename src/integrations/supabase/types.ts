@@ -296,6 +296,41 @@ export type Database = {
           },
         ]
       }
+      rest_days: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          rest_date: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          rest_date: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          rest_date?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rest_days_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streaks: {
         Row: {
           avg_checkin_time: string | null
@@ -464,6 +499,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_rest_days_remaining: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: number
+      }
       lookup_group_by_invite_code: {
         Args: { code: string }
         Returns: {
@@ -473,6 +512,10 @@ export type Database = {
           invites_enabled: boolean
           name: string
         }[]
+      }
+      take_rest_day: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: Json
       }
       update_user_streak: {
         Args: { p_group_id: string; p_user_id: string }
