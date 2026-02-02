@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -51,100 +50,122 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background gradient orbs */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-pink-500/15 rounded-full blur-[100px] -z-10" />
+      
       {/* Logo */}
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-black text-gradient-primary mb-2">HABITZ</h1>
-        <p className="text-muted-foreground">
+      <div className="mb-10 text-center animate-fade-in">
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <div className="w-12 h-12 rounded-2xl gradient-brand flex items-center justify-center shadow-glow">
+            <Zap className="w-6 h-6 text-white" />
+          </div>
+        </div>
+        <h1 className="text-5xl font-heading font-bold text-gradient-brand mb-3 tracking-tight">
+          HABITZ
+        </h1>
+        <p className="text-muted-foreground text-lg">
           Compete with friends. Build streaks. Don't quit.
         </p>
       </div>
 
-      <Card className="w-full max-w-sm p-6 bg-card border-border shadow-card">
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={mode === 'login' ? 'default' : 'ghost'}
-            className={mode === 'login' ? 'flex-1 gradient-primary' : 'flex-1'}
-            onClick={() => setMode('login')}
-          >
-            LOG IN
-          </Button>
-          <Button
-            variant={mode === 'signup' ? 'default' : 'ghost'}
-            className={mode === 'signup' ? 'flex-1 gradient-primary' : 'flex-1'}
-            onClick={() => setMode('signup')}
-          >
-            SIGN UP
-          </Button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'signup' && (
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="pl-10 bg-input border-border h-12"
-                required
-              />
-            </div>
-          )}
-
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 bg-input border-border h-12"
-              required
-            />
-          </div>
-
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 bg-input border-border h-12"
-              required
-              minLength={6}
-            />
+      <div className="w-full max-w-sm animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        {/* Glass card */}
+        <div className="glass-card rounded-2xl p-6 shadow-elevated">
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 p-1 bg-muted/50 rounded-xl">
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                mode === 'login'
+                  ? 'bg-card text-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setMode('login')}
             >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              Log In
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                mode === 'signup'
+                  ? 'bg-card text-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setMode('signup')}
+            >
+              Sign Up
             </button>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full h-12 gradient-primary font-bold uppercase tracking-wide shadow-glow"
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : mode === 'login' ? (
-              'LOG IN'
-            ) : (
-              'CREATE ACCOUNT'
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'signup' && (
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Input
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all"
+                  required
+                />
+              </div>
             )}
-          </Button>
-        </form>
-      </Card>
 
-      <p className="mt-6 text-xs text-muted-foreground text-center max-w-xs">
-        By continuing, you agree to our Terms of Service and Privacy Policy
-      </p>
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+              <Input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all"
+                required
+              />
+            </div>
+
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-12 pr-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-14 gradient-brand font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : mode === 'login' ? (
+                'Log In'
+              ) : (
+                'Create Account'
+              )}
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-xs text-muted-foreground text-center">
+          By continuing, you agree to our Terms of Service and Privacy Policy
+        </p>
+      </div>
     </div>
   );
 };
