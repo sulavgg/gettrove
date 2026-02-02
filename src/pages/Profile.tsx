@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/ui/BottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
+import { WeeklyRecapViewer } from '@/components/recap/WeeklyRecapViewer';
 
 interface UserStats {
   activeStreaks: number;
@@ -159,6 +160,16 @@ const Profile = () => {
             </Card>
           </div>
         )}
+
+        {/* Weekly Recap */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Weekly Recap
+          </h3>
+          <Card className="p-4 bg-card border-border">
+            <WeeklyRecapViewer />
+          </Card>
+        </div>
 
         {/* Badges Section */}
         <div className="mb-6">

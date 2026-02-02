@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, BarChart3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { FAB } from '@/components/ui/FAB';
@@ -8,6 +8,9 @@ import { GroupCard } from '@/components/GroupCard';
 import { EmptyState } from '@/components/EmptyState';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, HabitType } from '@/lib/supabase';
+import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
+import { WeeklyRecapSlides } from '@/components/recap/WeeklyRecapSlides';
+import { toast } from 'sonner';
 
 interface GroupData {
   id: string;
@@ -26,6 +29,15 @@ const Home = () => {
   const { user, profile } = useAuth();
   const [groups, setGroups] = useState<GroupData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showRecapBanner, setShowRecapBanner] = useState(true);
+  const [showRecapSlides, setShowRecapSlides] = useState(false);
+  
+  const { 
+    latestRecap, 
+    hasUnviewedRecap, 
+    markAsViewed, 
+    generateRecapLocally 
+  } = useWeeklyRecap();
 
   useEffect(() => {
     if (user) {
@@ -133,7 +145,55 @@ const Home = () => {
     );
   }
 
+  const handleOpenRecap = async () => {
+    if (latestRecap) {
+      setShowRecapSlides(true);
+      if (hasUnviewedRecap) {
+        markAsViewed(latestRecap.id);
+      }
+    } else {
+      const generated = await generateRecapLocally();
+      if (generated) {
+        setShowRecapSlides(true);
+      } else {
+        toast.error('Unable to generate recap');
+      }
+    }
+  };
+
+  const handleShareRecap = async () => {
+    if (!latestRecap) return;
+    
+    const shareText = `My HABITZ week: ${latestRecap.daysPosted}/7 days posted, ${latestRecap.currentStreak}-day streak! 🔥`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My HABITZ Week',
+          text: shareText,
+          url: window.location.origin,
+        });
+      } catch {
+        console.log('Share cancelled');
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      toast.success('Copied to clipboard!');
+    }
+  };
+
   const hasUnpostedGroups = groups.some((g) => !g.posted_today);
+
+  // Weekly Recap Slides
+  if (showRecapSlides && latestRecap) {
+    return (
+      <WeeklyRecapSlides
+        data={latestRecap}
+        onClose={() => setShowRecapSlides(false)}
+        onShare={handleShareRecap}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -161,6 +221,35 @@ const Home = () => {
       </header>
 
       <main className="px-4 py-6">
+        {/* Weekly Recap Banner */}
+        {hasUnviewedRecap && showRecapBanner && (
+          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 relative">
+            <button
+              onClick={() => setShowRecapBanner(false)}
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-background/50"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/20">
+                <BarChart3 className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">📊 Your weekly recap is ready!</p>
+                <p className="text-sm text-muted-foreground">
+                  See how you did last week
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleOpenRecap}
+              className="w-full mt-3 gradient-primary font-semibold"
+            >
+              View Recap
+            </Button>
+          </div>
+        )}
+
         {/* Alert for unposted groups */}
         {hasUnpostedGroups && groups.length > 0 && (
           <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
