@@ -36,25 +36,24 @@ const JoinGroup = () => {
 
   const fetchGroupInfo = async () => {
     try {
-      // Get group by invite code
+      // Use RPC function for secure invite code lookup (doesn't expose all groups)
       const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .select('*')
-        .eq('invite_code', code?.toUpperCase())
-        .single();
+        .rpc('lookup_group_by_invite_code', { code: code?.toUpperCase() || '' });
 
-      if (groupError || !groupData) {
+      if (groupError || !groupData || groupData.length === 0) {
         setError('This invite link is invalid or expired');
         setLoading(false);
         return;
       }
+
+      const groupInfo = groupData[0];
 
       // Check if already a member
       if (user) {
         const { data: membership } = await supabase
           .from('group_members')
           .select('id')
-          .eq('group_id', groupData.id)
+          .eq('group_id', groupInfo.id)
           .eq('user_id', user.id)
           .single();
 
@@ -63,27 +62,28 @@ const JoinGroup = () => {
         }
       }
 
-      // Get member count and member previews
+      // Get member count and member previews using the public view (excludes email)
       const { data: members } = await supabase
         .from('group_members')
         .select('user_id')
-        .eq('group_id', groupData.id);
+        .eq('group_id', groupInfo.id);
 
       const memberIds = members?.map((m) => m.user_id) || [];
       
+      // Use profiles_public view to get only non-sensitive fields
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('name, profile_photo_url')
         .in('user_id', memberIds)
         .limit(5);
 
       setGroup({
-        id: groupData.id,
-        name: groupData.name,
-        habit_type: groupData.habit_type as HabitType,
-        custom_habit: groupData.custom_habit,
+        id: groupInfo.id,
+        name: groupInfo.name,
+        habit_type: groupInfo.habit_type as HabitType,
+        custom_habit: groupInfo.custom_habit,
         member_count: memberIds.length,
-        members: (profiles || []).map((p) => ({
+        members: (profiles || []).map((p: any) => ({
           name: p.name,
           photo: p.profile_photo_url,
         })),
@@ -124,7 +124,7 @@ const JoinGroup = () => {
         group_id: group.id,
       });
 
-      // Add system message to chat
+      // Add system message to chat - user can still view own profile from profiles table
       const { data: profile } = await supabase
         .from('profiles')
         .select('name')

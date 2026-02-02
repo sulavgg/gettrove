@@ -86,8 +86,9 @@ const GroupChat = () => {
       if (messagesData) {
         // Get user profiles
         const userIds = [...new Set(messagesData.map((m) => m.user_id).filter(Boolean))];
+        // Use profiles_public view to avoid exposing email addresses
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, name, profile_photo_url')
           .in('user_id', userIds);
 
@@ -136,8 +137,9 @@ const GroupChat = () => {
           let userPhoto = null;
 
           if (newMsg.user_id) {
+            // Use profiles_public view to avoid exposing email addresses
             const { data: profile } = await supabase
-              .from('profiles')
+              .from('profiles_public')
               .select('name, profile_photo_url')
               .eq('user_id', newMsg.user_id)
               .single();

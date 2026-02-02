@@ -342,10 +342,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          name: string | null
+          profile_photo_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          profile_photo_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          profile_photo_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      lookup_group_by_invite_code: {
+        Args: { code: string }
+        Returns: {
+          custom_habit: string
+          habit_type: Database["public"]["Enums"]["habit_type"]
+          id: string
+          invites_enabled: boolean
+          name: string
+        }[]
+      }
     }
     Enums: {
       habit_type:
