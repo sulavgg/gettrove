@@ -182,10 +182,15 @@ const Post = () => {
       if (uploadError) throw uploadError;
       setUploadProgress(60);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (bucket is now private for security)
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('checkin-photos')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600 * 24 * 7); // 7 day expiry
+
+      if (urlError) throw urlError;
+      const photoUrl = signedUrlData?.signedUrl;
+
+      if (!photoUrl) throw new Error('Failed to generate signed URL');
 
       // Create checkins for each selected group
       for (const groupId of selectedGroups) {
@@ -193,7 +198,7 @@ const Post = () => {
         await supabase.from('checkins').insert({
           user_id: user.id,
           group_id: groupId,
-          photo_url: publicUrl,
+          photo_url: photoUrl,
           caption: caption.trim() || null,
         });
 

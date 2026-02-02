@@ -56,7 +56,7 @@ const GroupDetail = () => {
     if (!id || !user) return;
 
     try {
-      // First try to get group by ID
+      // First try to get group by ID (members can view their groups via RLS)
       let groupData;
       const { data: groupById } = await supabase
         .from('groups')
@@ -67,13 +67,19 @@ const GroupDetail = () => {
       if (groupById) {
         groupData = groupById;
       } else {
-        // Try by invite code
+        // Try by invite code using secure RPC function
         const { data: groupByCode } = await supabase
-          .from('groups')
-          .select('*')
-          .eq('invite_code', id.toUpperCase())
-          .single();
-        groupData = groupByCode;
+          .rpc('lookup_group_by_invite_code', { code: id.toUpperCase() });
+        
+        if (groupByCode && groupByCode.length > 0) {
+          // Get full group data since user may be a member
+          const { data: fullGroup } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('id', groupByCode[0].id)
+            .single();
+          groupData = fullGroup;
+        }
       }
 
       if (!groupData) {
@@ -102,8 +108,9 @@ const GroupDetail = () => {
 
       const memberIds = membersData?.map((m) => m.user_id) || [];
 
+      // Use profiles_public view to avoid exposing email addresses
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, name, profile_photo_url')
         .in('user_id', memberIds);
 

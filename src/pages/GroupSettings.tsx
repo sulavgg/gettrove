@@ -72,8 +72,9 @@ const GroupSettings = () => {
 
       const memberIds = membersData?.map((m) => m.user_id) || [];
       
+      // Use profiles_public view to avoid exposing email addresses
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, name, profile_photo_url')
         .in('user_id', memberIds);
 
