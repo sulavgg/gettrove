@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { CameraCapture } from '@/components/camera/CameraCapture';
 
 interface GroupOption {
   id: string;
@@ -23,7 +24,7 @@ const Post = () => {
   const { user, profile, updateProfile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [step, setStep] = useState<'select' | 'photo' | 'caption' | 'success'>('select');
+  const [step, setStep] = useState<'select' | 'camera' | 'caption' | 'success'>('select');
   const [groups, setGroups] = useState<GroupOption[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -33,6 +34,7 @@ const Post = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -119,8 +121,29 @@ const Post = () => {
 
       setPhoto(file);
       setPhotoPreview(URL.createObjectURL(file));
+      setShowCamera(false);
       setStep('caption');
     }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setShowCamera(false);
+    setStep('caption');
+  };
+
+  const handleOpenCamera = () => {
+    setShowCamera(true);
+  };
+
+  const handleCloseCamera = () => {
+    setShowCamera(false);
+  };
+
+  const handleGalleryFromCamera = () => {
+    setShowCamera(false);
+    fileInputRef.current?.click();
   };
 
   const compressImage = async (file: File): Promise<Blob> => {
@@ -242,6 +265,17 @@ const Post = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
+    );
+  }
+
+  // Camera view
+  if (showCamera) {
+    return (
+      <CameraCapture
+        onCapture={handleCameraCapture}
+        onClose={handleCloseCamera}
+        onGallerySelect={handleGalleryFromCamera}
+      />
     );
   }
 
@@ -391,7 +425,7 @@ const Post = () => {
           {selectedGroups.length > 0 && (
             <div className="space-y-3">
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleOpenCamera}
                 className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow gap-2"
               >
                 <Camera className="w-5 h-5" />
@@ -412,7 +446,6 @@ const Post = () => {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleFileSelect}
             className="hidden"
           />

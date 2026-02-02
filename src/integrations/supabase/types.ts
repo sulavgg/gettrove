@@ -340,6 +340,102 @@ export type Database = {
           },
         ]
       }
+      weekly_recaps: {
+        Row: {
+          avg_post_time: string | null
+          best_performer_days: number | null
+          best_performer_name: string | null
+          created_at: string
+          current_streak: number
+          day_statuses: Json
+          days_posted: number
+          earliest_post_day: string | null
+          earliest_post_time: string | null
+          group_consistency: number | null
+          group_id: string | null
+          group_rank: number | null
+          group_total: number | null
+          id: string
+          longest_streak_month: number
+          most_productive_day: string | null
+          next_milestone_days: number | null
+          next_milestone_name: string | null
+          shareable_image_url: string | null
+          streak_broken_on: string | null
+          streak_change: number
+          struggling_member_days: number | null
+          struggling_member_name: string | null
+          toughest_day: string | null
+          user_consistency: number | null
+          user_id: string
+          viewed_at: string | null
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          avg_post_time?: string | null
+          best_performer_days?: number | null
+          best_performer_name?: string | null
+          created_at?: string
+          current_streak?: number
+          day_statuses?: Json
+          days_posted?: number
+          earliest_post_day?: string | null
+          earliest_post_time?: string | null
+          group_consistency?: number | null
+          group_id?: string | null
+          group_rank?: number | null
+          group_total?: number | null
+          id?: string
+          longest_streak_month?: number
+          most_productive_day?: string | null
+          next_milestone_days?: number | null
+          next_milestone_name?: string | null
+          shareable_image_url?: string | null
+          streak_broken_on?: string | null
+          streak_change?: number
+          struggling_member_days?: number | null
+          struggling_member_name?: string | null
+          toughest_day?: string | null
+          user_consistency?: number | null
+          user_id: string
+          viewed_at?: string | null
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          avg_post_time?: string | null
+          best_performer_days?: number | null
+          best_performer_name?: string | null
+          created_at?: string
+          current_streak?: number
+          day_statuses?: Json
+          days_posted?: number
+          earliest_post_day?: string | null
+          earliest_post_time?: string | null
+          group_consistency?: number | null
+          group_id?: string | null
+          group_rank?: number | null
+          group_total?: number | null
+          id?: string
+          longest_streak_month?: number
+          most_productive_day?: string | null
+          next_milestone_days?: number | null
+          next_milestone_name?: string | null
+          shareable_image_url?: string | null
+          streak_broken_on?: string | null
+          streak_change?: number
+          struggling_member_days?: number | null
+          struggling_member_name?: string | null
+          toughest_day?: string | null
+          user_consistency?: number | null
+          user_id?: string
+          viewed_at?: string | null
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_public: {
