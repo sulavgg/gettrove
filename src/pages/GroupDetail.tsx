@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { FAB } from '@/components/ui/FAB';
 import { RestDayButton } from '@/components/RestDayButton';
+import { LeaderboardTab } from '@/components/LeaderboardTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -357,65 +358,13 @@ const GroupDetail = () => {
           </TabsContent>
 
           <TabsContent value="leaderboard">
-            <div className="space-y-2">
-              {members
-                .sort((a, b) => b.current_streak - a.current_streak)
-                .map((member, index) => {
-                  const rank = index + 1;
-                  const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
-                  const isCurrentUser = member.user_id === user?.id;
-
-                  return (
-                    <div
-                      key={member.user_id}
-                      className={cn(
-                        'flex items-center gap-3 p-4 rounded-xl border transition-colors',
-                        isCurrentUser
-                          ? 'bg-primary/10 border-primary/20'
-                          : 'bg-card border-border'
-                      )}
-                    >
-                      {/* Rank */}
-                      <div className="w-8 text-center">
-                        {medal ? (
-                          <span className="text-xl">{medal}</span>
-                        ) : (
-                          <span className="text-muted-foreground font-bold">{rank}</span>
-                        )}
-                      </div>
-
-                      {/* Avatar */}
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={member.photo || undefined} />
-                        <AvatarFallback className="bg-primary/20 text-primary">
-                          {member.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground truncate">
-                          {member.name}
-                          {isCurrentUser && ' (You)'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.posted_today ? '✓ Posted today' : 'Waiting...'}
-                        </p>
-                      </div>
-
-                      {/* Streak */}
-                      <div className="text-right">
-                        <p className="font-bold text-warning flex items-center gap-1">
-                          {member.current_streak > 0 && (
-                            <span className="animate-pulse-fire">🔥</span>
-                          )}
-                          {member.current_streak} days
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
+            <LeaderboardTab 
+              members={members} 
+              currentUserId={user?.id} 
+              groupId={group.id}
+              groupName={group.name}
+              onRefresh={fetchGroupData}
+            />
           </TabsContent>
         </Tabs>
       </main>
