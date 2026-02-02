@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/ui/BottomNav';
 import { FAB } from '@/components/ui/FAB';
 import { GroupCard } from '@/components/GroupCard';
 import { EmptyState } from '@/components/EmptyState';
+import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, HabitType } from '@/lib/supabase';
 import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
@@ -31,6 +32,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [showRecapBanner, setShowRecapBanner] = useState(true);
   const [showRecapSlides, setShowRecapSlides] = useState(false);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
   
   const { 
     latestRecap, 
@@ -291,10 +293,13 @@ const Home = () => {
             actionLabel="+ Create Your First Group"
             onAction={() => navigate('/create-group')}
             secondaryLabel="Join a friend's group"
-            onSecondaryAction={() => navigate('/')}
+            onSecondaryAction={() => setShowJoinDialog(true)}
           />
         )}
       </main>
+
+      {/* Join by Code Dialog */}
+      <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />
 
       {/* FAB - only show if user has groups */}
       {groups.length > 0 && <FAB />}

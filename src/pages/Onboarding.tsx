@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
 
 const slides = [
   {
@@ -33,6 +34,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { updateProfile } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
 
   const handleComplete = async (action: 'create' | 'join' | 'skip') => {
     await updateProfile({ onboarding_completed: true });
@@ -40,7 +42,7 @@ const Onboarding = () => {
     if (action === 'create') {
       navigate('/create-group');
     } else if (action === 'join') {
-      navigate('/');
+      setShowJoinDialog(true);
     } else {
       navigate('/');
     }
@@ -149,6 +151,9 @@ const Onboarding = () => {
           </Button>
         </div>
       )}
+
+      {/* Join by Code Dialog */}
+      <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />
     </div>
   );
 };

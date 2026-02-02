@@ -25,6 +25,7 @@ const CreateGroup = () => {
   const [customHabit, setCustomHabit] = useState('');
   const [loading, setLoading] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
+  const [groupId, setGroupId] = useState('');
   const [copied, setCopied] = useState(false);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -65,6 +66,7 @@ const CreateGroup = () => {
       });
 
       setInviteCode(group.invite_code);
+      setGroupId(group.id);
       setStep('invite');
       toast.success('Group created! 🎉');
     } catch (error: any) {
@@ -147,7 +149,7 @@ const CreateGroup = () => {
 
           <div className="space-y-3">
             <Button
-              onClick={() => navigate(`/group/${inviteCode}`)}
+              onClick={() => navigate(`/group/${groupId}`)}
               className="w-full h-12 gradient-primary font-bold uppercase tracking-wide shadow-glow"
             >
               Go to Group
