@@ -107,11 +107,9 @@ const Leaderboard = () => {
 
       const memberIds = members?.map((m) => m.user_id) || [];
 
-      // Use profiles_public view to avoid exposing email addresses
+      // Use secure RPC function to get public profile data (excludes email, enforces auth)
       const { data: profiles } = await supabase
-        .from('profiles_public')
-        .select('user_id, name, profile_photo_url')
-        .in('user_id', memberIds);
+        .rpc('get_group_member_profiles', { p_group_id: selectedGroup });
 
       // Get streaks
       const { data: streaks } = await supabase

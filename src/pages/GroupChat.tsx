@@ -84,13 +84,9 @@ const GroupChat = () => {
         .limit(100);
 
       if (messagesData) {
-        // Get user profiles
-        const userIds = [...new Set(messagesData.map((m) => m.user_id).filter(Boolean))];
-        // Use profiles_public view to avoid exposing email addresses
+        // Get user profiles using secure RPC function (excludes email, enforces auth)
         const { data: profiles } = await supabase
-          .from('profiles_public')
-          .select('user_id, name, profile_photo_url')
-          .in('user_id', userIds);
+          .rpc('get_group_member_profiles', { p_group_id: id });
 
         const profileMap = new Map(
           profiles?.map((p) => [p.user_id, { name: p.name, photo: p.profile_photo_url }])
@@ -137,16 +133,13 @@ const GroupChat = () => {
           let userPhoto = null;
 
           if (newMsg.user_id) {
-            // Use profiles_public view to avoid exposing email addresses
+            // Use secure RPC function to get public profile (excludes email, enforces auth)
             const { data: profile } = await supabase
-              .from('profiles_public')
-              .select('name, profile_photo_url')
-              .eq('user_id', newMsg.user_id)
-              .single();
+              .rpc('get_public_profile', { p_user_id: newMsg.user_id });
 
-            if (profile) {
-              userName = profile.name;
-              userPhoto = profile.profile_photo_url;
+            if (profile && profile.length > 0) {
+              userName = profile[0].name;
+              userPhoto = profile[0].profile_photo_url;
             }
           }
 
