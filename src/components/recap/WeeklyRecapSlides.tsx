@@ -9,6 +9,14 @@ interface DayStatus {
   posted: boolean;
 }
 
+export interface WeekPhoto {
+  id: string;
+  photoUrl: string;
+  caption?: string | null;
+  createdAt: string;
+  dayName: string;
+}
+
 export interface RecapData {
   id: string;
   weekRange: string;
@@ -16,6 +24,7 @@ export interface RecapData {
   weekEnd: string;
   daysPosted: number;
   dayStatuses: DayStatus[];
+  weekPhotos: WeekPhoto[];
   currentStreak: number;
   streakChange: number;
   streakBrokenOn?: string;
@@ -43,13 +52,14 @@ interface WeeklyRecapSlidesProps {
   onShare: () => void;
 }
 
-const TOTAL_SLIDES = 6;
-
 export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const hasPhotos = data.weekPhotos && data.weekPhotos.length > 0;
+  const TOTAL_SLIDES = hasPhotos ? 7 : 6;
+  
   const isPerfectWeek = data.daysPosted === 7;
   const hasStreakMilestone = data.currentStreak > 0 && data.currentStreak % 7 === 0;
 
@@ -147,7 +157,75 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
       {renderDayCircles()}
     </div>,
 
-    // Slide 2: Streak Status
+    // Slide 2: Photo Collage (only if photos exist)
+    ...(hasPhotos ? [
+      <div key="photos" className="flex flex-col items-center justify-center min-h-full px-6 py-12">
+        <motion.p
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-primary font-bold tracking-wider uppercase mb-4"
+        >
+          Your Week in Photos
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="text-muted-foreground mb-6"
+        >
+          {data.weekPhotos.length} {data.weekPhotos.length === 1 ? 'check-in' : 'check-ins'}
+        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className={cn(
+            "w-full max-w-sm",
+            data.weekPhotos.length === 1 
+              ? "aspect-square" 
+              : data.weekPhotos.length === 2 
+                ? "grid grid-cols-2 gap-2"
+                : data.weekPhotos.length <= 4 
+                  ? "grid grid-cols-2 gap-2"
+                  : "grid grid-cols-3 gap-2"
+          )}
+        >
+          {data.weekPhotos.slice(0, 9).map((photo, idx) => (
+            <motion.div
+              key={photo.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 * idx + 0.3 }}
+              className={cn(
+                "relative overflow-hidden rounded-xl bg-secondary",
+                data.weekPhotos.length === 1 ? "aspect-square w-full" : "aspect-square"
+              )}
+            >
+              <img
+                src={photo.photoUrl}
+                alt={`Check-in on ${photo.dayName}`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                <p className="text-white text-xs font-medium">{photo.dayName}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+        {data.weekPhotos.length > 9 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+            className="text-muted-foreground text-sm mt-4"
+          >
+            +{data.weekPhotos.length - 9} more
+          </motion.p>
+        )}
+      </div>
+    ] : []),
+
+    // Slide 3: Streak Status
     <div key="streak" className="flex flex-col items-center justify-center min-h-full px-6 py-12">
       <motion.p
         initial={{ opacity: 0, y: -20 }}
@@ -339,13 +417,30 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
         Share Your Week
       </motion.p>
       
-      {/* Mini preview card */}
+      {/* Mini preview card with photos */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.2 }}
         className="w-full max-w-xs bg-gradient-to-br from-card to-background p-6 rounded-2xl border border-border mb-8"
       >
+        {/* Mini photo grid */}
+        {hasPhotos && (
+          <div className="grid grid-cols-4 gap-1 mb-4">
+            {data.weekPhotos.slice(0, 4).map((photo, idx) => (
+              <div
+                key={photo.id}
+                className="aspect-square rounded-md overflow-hidden bg-secondary"
+              >
+                <img
+                  src={photo.photoUrl}
+                  alt={`Check-in ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        )}
         <p className="text-sm text-muted-foreground mb-2">My HABITZ Week</p>
         <p className="text-3xl font-black text-foreground mb-1">
           {data.daysPosted}/7 days

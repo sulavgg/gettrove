@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfWeek, endOfWeek, subWeeks, eachDayOfInterval, parseISO } from 'date-fns';
-import type { RecapData } from '@/components/recap/WeeklyRecapSlides';
+import type { RecapData, WeekPhoto } from '@/components/recap/WeeklyRecapSlides';
 
 interface DayStatus {
   day: string;
@@ -19,6 +19,7 @@ export const useWeeklyRecap = () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapDbToRecapData = (db: any): RecapData => {
     const dayStatuses = (db.day_statuses as DayStatus[] | null) || [];
+    // Photos will be fetched separately and merged
     return {
       id: db.id,
       weekRange: `${format(parseISO(db.week_start), 'MMM d')} - ${format(parseISO(db.week_end), 'MMM d, yyyy')}`,
@@ -26,6 +27,7 @@ export const useWeeklyRecap = () => {
       weekEnd: db.week_end,
       daysPosted: db.days_posted,
       dayStatuses,
+      weekPhotos: [], // Will be populated separately
       currentStreak: db.current_streak,
       streakChange: db.streak_change,
       streakBrokenOn: db.streak_broken_on || undefined,
@@ -48,6 +50,35 @@ export const useWeeklyRecap = () => {
     };
   };
 
+  const fetchWeekPhotos = async (weekStart: string, weekEnd: string): Promise<WeekPhoto[]> => {
+    if (!user) return [];
+    
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    try {
+      const { data: checkins } = await supabase
+        .from('checkins')
+        .select('id, photo_url, caption, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', `${weekStart}T00:00:00`)
+        .lte('created_at', `${weekEnd}T23:59:59`)
+        .order('created_at', { ascending: true });
+
+      if (!checkins) return [];
+
+      return checkins.map(c => ({
+        id: c.id,
+        photoUrl: c.photo_url,
+        caption: c.caption,
+        createdAt: c.created_at,
+        dayName: dayNames[parseISO(c.created_at).getDay()],
+      }));
+    } catch (error) {
+      console.error('Error fetching week photos:', error);
+      return [];
+    }
+  };
+
   const fetchRecaps = useCallback(async () => {
     if (!user) return;
     
@@ -61,7 +92,15 @@ export const useWeeklyRecap = () => {
 
       if (error) throw error;
 
-      const mappedRecaps = (data || []).map(mapDbToRecapData);
+      // Map recaps and fetch photos for each
+      const mappedRecaps = await Promise.all(
+        (data || []).map(async (db) => {
+          const baseRecap = mapDbToRecapData(db);
+          const weekPhotos = await fetchWeekPhotos(db.week_start, db.week_end);
+          return { ...baseRecap, weekPhotos };
+        })
+      );
+      
       setRecaps(mappedRecaps);
       
       if (mappedRecaps.length > 0) {
@@ -107,7 +146,7 @@ export const useWeeklyRecap = () => {
       // Get user's checkins for last week
       const { data: checkins } = await supabase
         .from('checkins')
-        .select('created_at, group_id')
+        .select('id, created_at, group_id, photo_url, caption')
         .eq('user_id', user.id)
         .gte('created_at', lastWeekStart.toISOString())
         .lte('created_at', lastWeekEnd.toISOString());
@@ -244,6 +283,15 @@ export const useWeeklyRecap = () => {
         earliestPostDay = withTimes[0].day;
       }
 
+      // Build week photos from checkins
+      const weekPhotosData: WeekPhoto[] = checkins?.map(c => ({
+        id: c.id,
+        photoUrl: c.photo_url,
+        caption: c.caption,
+        createdAt: c.created_at,
+        dayName: dayNames[parseISO(c.created_at).getDay() === 0 ? 6 : parseISO(c.created_at).getDay() - 1],
+      })) || [];
+
       return {
         id: 'local-' + Date.now(),
         weekRange: `${format(lastWeekStart, 'MMM d')} - ${format(lastWeekEnd, 'MMM d, yyyy')}`,
@@ -251,6 +299,7 @@ export const useWeeklyRecap = () => {
         weekEnd: format(lastWeekEnd, 'yyyy-MM-dd'),
         daysPosted,
         dayStatuses,
+        weekPhotos: weekPhotosData,
         currentStreak,
         streakChange: 0,
         longestStreakMonth,
