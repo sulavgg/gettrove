@@ -499,6 +499,26 @@ export type Database = {
       }
     }
     Functions: {
+      get_group_member_profiles: {
+        Args: { p_group_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+          profile_photo_url: string
+          user_id: string
+        }[]
+      }
+      get_public_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+          profile_photo_url: string
+          user_id: string
+        }[]
+      }
       get_rest_days_remaining: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: number
