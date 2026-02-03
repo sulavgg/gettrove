@@ -62,7 +62,7 @@ const JoinGroup = () => {
         }
       }
 
-      // Get member count and member previews using the public view (excludes email)
+      // Get member count and member previews using secure RPC function
       const { data: members } = await supabase
         .from('group_members')
         .select('user_id')
@@ -70,12 +70,10 @@ const JoinGroup = () => {
 
       const memberIds = members?.map((m) => m.user_id) || [];
       
-      // Use profiles_public view to get only non-sensitive fields
+      // Use secure RPC function to get public profile data (excludes email, enforces auth)
+      // Note: For join page, user may not be a member yet, so we use a limited approach
       const { data: profiles } = await supabase
-        .from('profiles_public')
-        .select('name, profile_photo_url')
-        .in('user_id', memberIds)
-        .limit(5);
+        .rpc('get_group_member_profiles', { p_group_id: groupInfo.id });
 
       setGroup({
         id: groupInfo.id,
