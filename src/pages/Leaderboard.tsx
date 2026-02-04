@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Select,
   SelectContent,
@@ -10,9 +9,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { EmptyState } from '@/components/EmptyState';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/PageTransition';
+import { LeaderboardSkeleton } from '@/components/skeletons/LeaderboardSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { triggerHaptic } from '@/hooks/useHaptic';
 
 interface GroupOption {
   id: string;
@@ -37,6 +41,7 @@ const Leaderboard = () => {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingEntries, setLoadingEntries] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -54,10 +59,12 @@ const Leaderboard = () => {
     if (!user) return;
 
     try {
-      const { data: memberships } = await supabase
+      const { data: memberships, error: membershipsError } = await supabase
         .from('group_members')
         .select('group_id')
         .eq('user_id', user.id);
+
+      if (membershipsError) throw membershipsError;
 
       if (!memberships?.length) {
         setLoading(false);
@@ -66,10 +73,12 @@ const Leaderboard = () => {
 
       const groupIds = memberships.map((m) => m.group_id);
 
-      const { data: groupsData } = await supabase
+      const { data: groupsData, error: groupsError } = await supabase
         .from('groups')
         .select('*')
         .in('id', groupIds);
+
+      if (groupsError) throw groupsError;
 
       const options: GroupOption[] = (groupsData || []).map((g) => ({
         id: g.id,
@@ -82,17 +91,20 @@ const Leaderboard = () => {
       if (options.length > 0) {
         setSelectedGroup(options[0].id);
       }
-    } catch (error) {
-      console.error('Error fetching groups:', error);
+    } catch (err: any) {
+      console.error('Error fetching groups:', err);
+      setError(err.message || 'Failed to load groups');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     if (!selectedGroup) return;
 
     setLoadingEntries(true);
+    setError(null);
+
     try {
       // Get today's date
       const today = new Date();
@@ -147,20 +159,17 @@ const Leaderboard = () => {
       });
 
       setEntries(leaderboardData);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+    } catch (err: any) {
+      console.error('Error fetching leaderboard:', err);
+      setError(err.message || 'Failed to load leaderboard');
     } finally {
       setLoadingEntries(false);
     }
-  };
+  }, [selectedGroup]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
-  }
+  const handleRefresh = useCallback(async () => {
+    await fetchLeaderboard();
+  }, [fetchLeaderboard]);
 
   const selectedGroupData = groups.find((g) => g.id === selectedGroup);
 
@@ -178,7 +187,13 @@ const Leaderboard = () => {
           <h1 className="text-2xl font-black text-foreground mb-4">Leaderboard</h1>
 
           {groups.length > 0 && (
-            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+            <Select 
+              value={selectedGroup} 
+              onValueChange={(value) => {
+                triggerHaptic('light');
+                setSelectedGroup(value);
+              }}
+            >
               <SelectTrigger className="bg-input border-border">
                 <SelectValue placeholder="Select a group" />
               </SelectTrigger>
@@ -200,103 +215,114 @@ const Leaderboard = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6">
-        {groups.length === 0 ? (
-          <EmptyState
-            emoji="🏆"
-            title="No groups yet"
-            description="Join a group to see the leaderboard"
-          />
-        ) : loadingEntries ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          </div>
-        ) : (
-          <>
-            {/* Group Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-card rounded-xl p-4 border border-border">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                  Avg Streak
-                </p>
-                <p className="text-2xl font-bold text-warning flex items-center gap-1">
-                  🔥 {avgStreak} days
-                </p>
-              </div>
-              <div className="bg-card rounded-xl p-4 border border-border">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                  Total Check-ins
-                </p>
-                <p className="text-2xl font-bold text-primary">
-                  {totalCheckins}
-                </p>
-              </div>
-            </div>
-
-            {/* Leaderboard list */}
-            <div className="space-y-2">
-              {entries.map((entry, index) => {
-                const rank = index + 1;
-                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
-                const isCurrentUser = entry.user_id === user?.id;
-
-                return (
-                  <div
-                    key={entry.user_id}
-                    className={cn(
-                      'flex items-center gap-3 p-4 rounded-xl border transition-colors',
-                      isCurrentUser
-                        ? 'bg-primary/10 border-primary/20'
-                        : 'bg-card border-border'
-                    )}
-                  >
-                    {/* Rank */}
-                    <div className="w-8 text-center flex-shrink-0">
-                      {medal ? (
-                        <span className="text-xl">{medal}</span>
-                      ) : (
-                        <span className="text-muted-foreground font-bold">{rank}</span>
-                      )}
-                    </div>
-
-                    {/* Avatar */}
-                    <Avatar className="w-10 h-10 flex-shrink-0">
-                      <AvatarImage src={entry.photo || undefined} />
-                      <AvatarFallback className="bg-primary/20 text-primary">
-                        {entry.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground truncate">
-                        {entry.name}
-                        {isCurrentUser && ' (You)'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {entry.total_checkins} total check-ins
-                      </p>
-                    </div>
-
-                    {/* Streak */}
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-warning flex items-center gap-1">
-                        {entry.current_streak > 0 && (
-                          <span className="animate-pulse-fire">🔥</span>
-                        )}
-                        {entry.current_streak} days
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {entry.posted_today ? '✓ Today' : '⏰ Pending'}
-                      </p>
-                    </div>
+      <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-80px)]">
+        <PageTransition>
+          <main className="px-4 py-6">
+            {loading ? (
+              <LeaderboardSkeleton count={5} />
+            ) : groups.length === 0 ? (
+              <EmptyState
+                emoji="🏆"
+                title="No groups yet"
+                description="Join a group to see the leaderboard"
+              />
+            ) : error ? (
+              <ErrorState
+                type="network"
+                message={error}
+                onRetry={fetchLeaderboard}
+              />
+            ) : loadingEntries ? (
+              <LeaderboardSkeleton count={5} />
+            ) : (
+              <>
+                {/* Group Stats */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Avg Streak
+                    </p>
+                    <p className="text-2xl font-bold text-warning flex items-center gap-1">
+                      🔥 {avgStreak} days
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </main>
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Total Check-ins
+                    </p>
+                    <p className="text-2xl font-bold text-primary">
+                      {totalCheckins}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Leaderboard list */}
+                <StaggeredList className="space-y-2">
+                  {entries.map((entry, index) => {
+                    const rank = index + 1;
+                    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+                    const isCurrentUser = entry.user_id === user?.id;
+
+                    return (
+                      <StaggeredItem key={entry.user_id}>
+                        <div
+                          className={cn(
+                            'flex items-center gap-3 p-4 rounded-xl border transition-colors',
+                            isCurrentUser
+                              ? 'bg-primary/10 border-primary/20'
+                              : 'bg-card border-border'
+                          )}
+                        >
+                          {/* Rank */}
+                          <div className="w-8 text-center flex-shrink-0">
+                            {medal ? (
+                              <span className="text-xl">{medal}</span>
+                            ) : (
+                              <span className="text-muted-foreground font-bold">{rank}</span>
+                            )}
+                          </div>
+
+                          {/* Avatar */}
+                          <Avatar className="w-10 h-10 flex-shrink-0">
+                            <AvatarImage src={entry.photo || undefined} />
+                            <AvatarFallback className="bg-primary/20 text-primary">
+                              {entry.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-foreground truncate">
+                              {entry.name}
+                              {isCurrentUser && ' (You)'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {entry.total_checkins} total check-ins
+                            </p>
+                          </div>
+
+                          {/* Streak */}
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-bold text-warning flex items-center gap-1">
+                              {entry.current_streak > 0 && (
+                                <span className="animate-pulse-fire">🔥</span>
+                              )}
+                              {entry.current_streak} days
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {entry.posted_today ? '✓ Today' : '⏰ Pending'}
+                            </p>
+                          </div>
+                        </div>
+                      </StaggeredItem>
+                    );
+                  })}
+                </StaggeredList>
+              </>
+            )}
+          </main>
+        </PageTransition>
+      </PullToRefresh>
 
       <BottomNav />
     </div>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Loader2, BarChart3, X } from 'lucide-react';
+import { Plus, BarChart3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { FAB } from '@/components/ui/FAB';
@@ -8,11 +8,16 @@ import { GroupCard } from '@/components/GroupCard';
 import { EmptyState } from '@/components/EmptyState';
 import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
 import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/PageTransition';
+import { GroupCardSkeletonList } from '@/components/skeletons/GroupCardSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, HabitType } from '@/lib/supabase';
 import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
 import { WeeklyRecapSlides } from '@/components/recap/WeeklyRecapSlides';
 import { toast } from 'sonner';
+import { triggerHaptic } from '@/hooks/useHaptic';
 
 interface GroupData {
   id: string;
@@ -32,6 +37,7 @@ const Home = () => {
   const { user, profile, isEmailVerified } = useAuth();
   const [groups, setGroups] = useState<GroupData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showRecapBanner, setShowRecapBanner] = useState(true);
   const [showRecapSlides, setShowRecapSlides] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
@@ -49,8 +55,10 @@ const Home = () => {
     }
   }, [user]);
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     if (!user) return;
+
+    setError(null);
 
     try {
       // Get user's groups
@@ -145,22 +153,20 @@ const Home = () => {
       );
 
       setGroups(enrichedGroups);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
+    } catch (err: any) {
+      console.error('Error fetching groups:', err);
+      setError(err.message || 'Failed to load groups');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
-  }
+  const handleRefresh = useCallback(async () => {
+    await fetchGroups();
+  }, [fetchGroups]);
 
   const handleOpenRecap = async () => {
+    triggerHaptic('light');
     if (latestRecap) {
       setShowRecapSlides(true);
       if (hasUnviewedRecap) {
@@ -231,6 +237,7 @@ const Home = () => {
             size="sm"
             variant="outline"
             className="gap-2 border-primary text-primary hover:bg-primary/10"
+            onClick={() => triggerHaptic('light')}
           >
             <Link to="/create-group">
               <Plus className="w-4 h-4" />
@@ -240,82 +247,101 @@ const Home = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6">
-        {/* Weekly Recap Banner */}
-        {hasUnviewedRecap && showRecapBanner && (
-          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 relative">
-            <button
-              onClick={() => setShowRecapBanner(false)}
-              className="absolute top-2 right-2 p-1 rounded-full hover:bg-background/50"
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/20">
-                <BarChart3 className="w-5 h-5 text-primary" />
+      <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-80px)]">
+        <PageTransition>
+          <main className="px-4 py-6">
+            {/* Weekly Recap Banner */}
+            {hasUnviewedRecap && showRecapBanner && (
+              <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 relative animate-fade-in">
+                <button
+                  onClick={() => setShowRecapBanner(false)}
+                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-background/50"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/20">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">📊 Your weekly recap is ready!</p>
+                    <p className="text-sm text-muted-foreground">
+                      See how you did last week
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleOpenRecap}
+                  className="w-full mt-3 gradient-primary font-semibold"
+                >
+                  View Recap
+                </Button>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-foreground">📊 Your weekly recap is ready!</p>
-                <p className="text-sm text-muted-foreground">
-                  See how you did last week
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={handleOpenRecap}
-              className="w-full mt-3 gradient-primary font-semibold"
-            >
-              View Recap
-            </Button>
-          </div>
-        )}
+            )}
 
-        {/* Alert for unposted groups */}
-        {hasUnpostedGroups && groups.length > 0 && (
-          <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <p className="font-semibold text-destructive">Don't break your streak!</p>
-                <p className="text-sm text-muted-foreground">
-                  You have groups waiting for today's check-in
-                </p>
+            {/* Alert for unposted groups */}
+            {hasUnpostedGroups && groups.length > 0 && (
+              <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <div>
+                    <p className="font-semibold text-destructive">Don't break your streak!</p>
+                    <p className="text-sm text-muted-foreground">
+                      You have groups waiting for today's check-in
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Groups list */}
-        {groups.length > 0 ? (
-          <div className="space-y-3">
-            {groups.map((group) => (
-              <GroupCard
-                key={group.id}
-                id={group.id}
-                name={group.name}
-                habitType={group.habit_type}
-                customHabit={group.custom_habit}
-                currentStreak={group.current_streak}
-                postedToday={group.posted_today}
-                restedToday={group.rested_today}
-                memberCount={group.member_count}
-                postedTodayCount={group.posted_today_count}
-                streakBroken={group.streak_broken}
+            {/* Loading state with skeletons */}
+            {loading ? (
+              <GroupCardSkeletonList count={3} />
+            ) : error ? (
+              <ErrorState
+                type="network"
+                message={error}
+                onRetry={fetchGroups}
               />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            emoji="👥"
-            title="No groups yet"
-            description="Create a group to compete with friends and build streaks"
-            actionLabel="+ Create Your First Group"
-            onAction={() => navigate('/create-group')}
-            secondaryLabel="Join a friend's group"
-            onSecondaryAction={() => setShowJoinDialog(true)}
-          />
-        )}
-      </main>
+            ) : groups.length > 0 ? (
+              <StaggeredList className="space-y-3">
+                {groups.map((group) => (
+                  <StaggeredItem key={group.id}>
+                    <GroupCard
+                      id={group.id}
+                      name={group.name}
+                      habitType={group.habit_type}
+                      customHabit={group.custom_habit}
+                      currentStreak={group.current_streak}
+                      postedToday={group.posted_today}
+                      restedToday={group.rested_today}
+                      memberCount={group.member_count}
+                      postedTodayCount={group.posted_today_count}
+                      streakBroken={group.streak_broken}
+                    />
+                  </StaggeredItem>
+                ))}
+              </StaggeredList>
+            ) : (
+              <EmptyState
+                emoji="👥"
+                title="No groups yet"
+                description="Create a group to compete with friends and build streaks"
+                actionLabel="+ Create Your First Group"
+                onAction={() => {
+                  triggerHaptic('light');
+                  navigate('/create-group');
+                }}
+                secondaryLabel="Join a friend's group"
+                onSecondaryAction={() => {
+                  triggerHaptic('light');
+                  setShowJoinDialog(true);
+                }}
+              />
+            )}
+          </main>
+        </PageTransition>
+      </PullToRefresh>
 
       {/* Join by Code Dialog */}
       <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />

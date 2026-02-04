@@ -1,15 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { BottomNav } from '@/components/ui/BottomNav';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { PageTransition } from '@/components/ui/PageTransition';
+import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { WeeklyRecapViewer } from '@/components/recap/WeeklyRecapViewer';
 import { toast } from 'sonner';
+import { triggerHaptic } from '@/hooks/useHaptic';
 
 interface UserStats {
   activeStreaks: number;
@@ -28,40 +33,44 @@ const Profile = () => {
     groupsJoined: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
   const handleResendVerification = async () => {
+    triggerHaptic('light');
     setResending(true);
     const { error } = await resendVerificationEmail();
     if (error) {
       toast.error(error.message);
+      triggerHaptic('error');
     } else {
       toast.success('Verification email sent! Check your inbox.');
+      triggerHaptic('success');
     }
     setResending(false);
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchStats();
-    }
-  }, [user]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user) return;
+
+    setError(null);
 
     try {
       // Get groups count
-      const { count: groupsCount } = await supabase
+      const { count: groupsCount, error: groupsError } = await supabase
         .from('group_members')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
+      if (groupsError) throw groupsError;
+
       // Get streaks data
-      const { data: streaks } = await supabase
+      const { data: streaks, error: streaksError } = await supabase
         .from('streaks')
         .select('current_streak, longest_streak, total_checkins')
         .eq('user_id', user.id);
+
+      if (streaksError) throw streaksError;
 
       const activeStreaks = streaks?.filter((s) => s.current_streak > 0).length || 0;
       const totalCheckins = streaks?.reduce((sum, s) => sum + s.total_checkins, 0) || 0;
@@ -73,14 +82,26 @@ const Profile = () => {
         longestStreak,
         groupsJoined: groupsCount || 0,
       });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
+    } catch (err: any) {
+      console.error('Error fetching stats:', err);
+      setError(err.message || 'Failed to load stats');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user, fetchStats]);
+
+  const handleRefresh = useCallback(async () => {
+    await fetchStats();
+  }, [fetchStats]);
 
   const handleSignOut = async () => {
+    triggerHaptic('medium');
     await signOut();
     navigate('/auth');
   };
@@ -104,159 +125,172 @@ const Profile = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6">
-        {/* Profile Card */}
-        <Card className="p-6 bg-card border-border mb-6">
-          <div className="flex flex-col items-center">
-            <div className="relative mb-4">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={profile?.profile_photo_url || undefined} />
-                <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <button className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground">
-                <Camera className="w-4 h-4" />
-              </button>
-            </div>
+      <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-80px)]">
+        <PageTransition>
+          <main className="px-4 py-6">
+            {loading ? (
+              <ProfileSkeleton />
+            ) : error ? (
+              <ErrorState
+                type="network"
+                message={error}
+                onRetry={fetchStats}
+              />
+            ) : (
+              <>
+                {/* Profile Card */}
+                <Card className="p-6 bg-card border-border mb-6">
+                  <div className="flex flex-col items-center">
+                    <div className="relative mb-4">
+                      <Avatar className="w-24 h-24">
+                        <AvatarImage src={profile?.profile_photo_url || undefined} />
+                        <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <button 
+                        className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground"
+                        onClick={() => triggerHaptic('light')}
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+                    </div>
 
-            <h2 className="text-xl font-bold text-foreground mb-1">
-              {profile?.name || 'Loading...'}
-            </h2>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">{profile?.email}</span>
-              {isEmailVerified ? (
-                <span className="flex items-center gap-1 text-success text-xs">
-                  <CheckCircle className="w-3 h-3" />
-                  Verified
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-warning text-xs">
-                  <AlertTriangle className="w-3 h-3" />
-                  Unverified
-                </span>
-              )}
-            </div>
-            {profile?.created_at && (
-              <p className="text-muted-foreground text-xs mt-1">
-                Member since {format(new Date(profile.created_at), 'MMM yyyy')}
-              </p>
-            )}
+                    <h2 className="text-xl font-bold text-foreground mb-1">
+                      {profile?.name || 'Loading...'}
+                    </h2>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">{profile?.email}</span>
+                      {isEmailVerified ? (
+                        <span className="flex items-center gap-1 text-success text-xs">
+                          <CheckCircle className="w-3 h-3" />
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-warning text-xs">
+                          <AlertTriangle className="w-3 h-3" />
+                          Unverified
+                        </span>
+                      )}
+                    </div>
+                    {profile?.created_at && (
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Member since {format(new Date(profile.created_at), 'MMM yyyy')}
+                      </p>
+                    )}
 
-            {/* Verification action */}
-            {!isEmailVerified && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResendVerification}
-                disabled={resending}
-                className="mt-3 gap-2"
-              >
-                {resending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4" />
-                    Resend Verification Email
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        </Card>
+                    {/* Verification action */}
+                    {!isEmailVerified && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResendVerification}
+                        disabled={resending}
+                        className="mt-3 gap-2"
+                      >
+                        {resending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4" />
+                            Resend Verification Email
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </Card>
 
-        {/* Stats Grid */}
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <Card className="p-4 bg-card border-border">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                Active Streaks
-              </p>
-              <p className="text-2xl font-bold text-warning flex items-center gap-1">
-                🔥 {stats.activeStreaks}
-              </p>
-            </Card>
-            <Card className="p-4 bg-card border-border">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                Total Check-ins
-              </p>
-              <p className="text-2xl font-bold text-primary">
-                ✅ {stats.totalCheckins}
-              </p>
-            </Card>
-            <Card className="p-4 bg-card border-border">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                Longest Streak
-              </p>
-              <p className="text-2xl font-bold text-success">
-                🏆 {stats.longestStreak} days
-              </p>
-            </Card>
-            <Card className="p-4 bg-card border-border">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                Groups Joined
-              </p>
-              <p className="text-2xl font-bold text-foreground">
-                👥 {stats.groupsJoined}
-              </p>
-            </Card>
-          </div>
-        )}
-
-        {/* Weekly Recap */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Weekly Recap
-          </h3>
-          <Card className="p-4 bg-card border-border">
-            <WeeklyRecapViewer />
-          </Card>
-        </div>
-
-        {/* Badges Section */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Badges
-          </h3>
-          <Card className="p-4 bg-card border-border">
-            <div className="grid grid-cols-4 gap-4">
-              {[
-                { emoji: '🔥', name: 'Week Warrior', days: 7, earned: stats.longestStreak >= 7 },
-                { emoji: '💪', name: 'Month Master', days: 30, earned: stats.longestStreak >= 30 },
-                { emoji: '🏆', name: 'Century Club', days: 100, earned: stats.longestStreak >= 100 },
-                { emoji: '👑', name: 'Year Legend', days: 365, earned: stats.longestStreak >= 365 },
-              ].map((badge) => (
-                <div
-                  key={badge.name}
-                  className={`flex flex-col items-center ${badge.earned ? '' : 'opacity-30'}`}
-                >
-                  <span className="text-3xl mb-1">{badge.emoji}</span>
-                  <p className="text-xs text-center text-muted-foreground">
-                    {badge.days}d
-                  </p>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <Card className="p-4 bg-card border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Active Streaks
+                    </p>
+                    <p className="text-2xl font-bold text-warning flex items-center gap-1">
+                      🔥 {stats.activeStreaks}
+                    </p>
+                  </Card>
+                  <Card className="p-4 bg-card border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Total Check-ins
+                    </p>
+                    <p className="text-2xl font-bold text-primary">
+                      ✅ {stats.totalCheckins}
+                    </p>
+                  </Card>
+                  <Card className="p-4 bg-card border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Longest Streak
+                    </p>
+                    <p className="text-2xl font-bold text-success">
+                      🏆 {stats.longestStreak} days
+                    </p>
+                  </Card>
+                  <Card className="p-4 bg-card border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Groups Joined
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      👥 {stats.groupsJoined}
+                    </p>
+                  </Card>
                 </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              Earn badges by building streaks
-            </p>
-          </Card>
-        </div>
 
-        {/* Sign Out */}
-        <Button
-          variant="outline"
-          onClick={handleSignOut}
-          className="w-full gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </Button>
-      </main>
+                {/* Weekly Recap */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    Weekly Recap
+                  </h3>
+                  <Card className="p-4 bg-card border-border">
+                    <WeeklyRecapViewer />
+                  </Card>
+                </div>
+
+                {/* Badges Section */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    Badges
+                  </h3>
+                  <Card className="p-4 bg-card border-border">
+                    <div className="grid grid-cols-4 gap-4">
+                      {[
+                        { emoji: '🔥', name: 'Week Warrior', days: 7, earned: stats.longestStreak >= 7 },
+                        { emoji: '💪', name: 'Month Master', days: 30, earned: stats.longestStreak >= 30 },
+                        { emoji: '🏆', name: 'Century Club', days: 100, earned: stats.longestStreak >= 100 },
+                        { emoji: '👑', name: 'Year Legend', days: 365, earned: stats.longestStreak >= 365 },
+                      ].map((badge) => (
+                        <div
+                          key={badge.name}
+                          className={`flex flex-col items-center ${badge.earned ? '' : 'opacity-30'}`}
+                        >
+                          <span className="text-3xl mb-1">{badge.emoji}</span>
+                          <p className="text-xs text-center text-muted-foreground">
+                            {badge.days}d
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center mt-4">
+                      Earn badges by building streaks
+                    </p>
+                  </Card>
+                </div>
+
+                {/* Sign Out */}
+                <Button
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="w-full gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </Button>
+              </>
+            )}
+          </main>
+        </PageTransition>
+      </PullToRefresh>
 
       <BottomNav />
     </div>

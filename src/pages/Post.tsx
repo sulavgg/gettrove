@@ -161,17 +161,17 @@ const Post = () => {
     fileInputRef.current?.click();
   };
 
-  const compressImage = async (file: File): Promise<Blob> => {
+  const compressImage = async (file: File, targetSizeKB: number = 300): Promise<Blob> => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const img = new window.Image();
 
-      img.onload = () => {
-        // Calculate new dimensions (max 1200px)
+      img.onload = async () => {
+        // Calculate new dimensions (max 1080px for more aggressive compression)
         let width = img.width;
         let height = img.height;
-        const maxSize = 1200;
+        const maxSize = 1080;
 
         if (width > maxSize || height > maxSize) {
           if (width > height) {
@@ -187,11 +187,20 @@ const Post = () => {
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob(
-          (blob) => resolve(blob!),
-          'image/jpeg',
-          0.85
-        );
+        // Iteratively compress to target size
+        let quality = 0.8;
+        let blob: Blob | null = null;
+        
+        do {
+          blob = await new Promise<Blob | null>((res) => 
+            canvas.toBlob((b) => res(b), 'image/jpeg', quality)
+          );
+          quality -= 0.1;
+        } while (blob && blob.size > targetSizeKB * 1024 && quality > 0.3);
+
+        resolve(blob || await new Promise<Blob>((res) => 
+          canvas.toBlob((b) => res(b!), 'image/jpeg', 0.5)
+        ));
       };
 
       img.src = URL.createObjectURL(file);
@@ -255,6 +264,9 @@ const Post = () => {
       if (!profile?.first_post_completed) {
         await updateProfile({ first_post_completed: true });
       }
+
+      // Success toast notification
+      toast.success('✓ Posted! Streak secured. 🔥');
 
       setStep('success');
     } catch (error: any) {
