@@ -523,6 +523,11 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: number
       }
+      get_user_group_ids: { Args: { p_user_id: string }; Returns: string[] }
+      is_group_member: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: boolean
+      }
       lookup_group_by_invite_code: {
         Args: { code: string }
         Returns: {
