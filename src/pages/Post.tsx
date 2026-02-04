@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Camera, Image, X, Loader2, Check, Moon } from 'lucide-react';
+import { ArrowLeft, Camera, Image, X, Loader2, Check, Moon, AlertTriangle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { RestDayButton } from '@/components/RestDayButton';
 import { useRestDays } from '@/hooks/useRestDays';
+import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
 
 interface GroupOption {
   id: string;
@@ -23,7 +24,7 @@ interface GroupOption {
 const Post = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, isEmailVerified, resendVerificationEmail } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<'select' | 'camera' | 'caption' | 'success'>('select');
@@ -37,6 +38,18 @@ const Post = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    const { error } = await resendVerificationEmail();
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Verification email sent!');
+    }
+    setResending(false);
+  };
 
   useEffect(() => {
     if (user) {
@@ -408,6 +421,44 @@ const Post = () => {
       </div>
     );
   };
+
+  // Verification required check
+  if (!isEmailVerified) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Back</span>
+        </button>
+
+        <div className="max-w-md mx-auto text-center">
+          <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-warning" />
+          </div>
+          <h1 className="text-2xl font-black text-foreground mb-2">
+            Verify Your Email
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            You need to verify your email address before posting check-ins. Check your inbox at <strong>{profile?.email}</strong> for the verification link.
+          </p>
+          <Button
+            onClick={handleResendVerification}
+            disabled={resending}
+            className="w-full h-12 gradient-primary font-semibold"
+          >
+            {resending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              'Resend Verification Email'
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

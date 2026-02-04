@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Loader2, Zap } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { validateEmail, validatePassword, validateName } from '@/lib/validation';
 
 type AuthMode = 'login' | 'signup';
 
@@ -18,28 +19,59 @@ const Auth = () => {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({ email: false, password: false, name: false });
+
+  // Validation states
+  const emailValidation = useMemo(() => validateEmail(email), [email]);
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const nameValidation = useMemo(() => validateName(name), [name]);
+
+  const isFormValid = useMemo(() => {
+    if (mode === 'signup') {
+      return emailValidation.valid && passwordValidation.valid && nameValidation.valid;
+    }
+    return emailValidation.valid && passwordValidation.valid;
+  }, [mode, emailValidation.valid, passwordValidation.valid, nameValidation.valid]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Mark all fields as touched
+    setTouched({ email: true, password: true, name: true });
+
+    // Validate before submission
+    if (!emailValidation.valid) {
+      toast.error(emailValidation.error);
+      return;
+    }
+    if (!passwordValidation.valid) {
+      toast.error(passwordValidation.error);
+      return;
+    }
+    if (mode === 'signup' && !nameValidation.valid) {
+      toast.error(nameValidation.error);
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (mode === 'signup') {
-        if (!name.trim()) {
-          toast.error('Please enter your name');
-          setLoading(false);
-          return;
-        }
-        const { error } = await signUp(email, password, name);
+        const { error } = await signUp(email.trim(), password, name.trim());
         if (error) {
           toast.error(error.message);
         } else {
           toast.success('Check your email to confirm your account!');
         }
       } else {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(email.trim(), password);
         if (error) {
-          toast.error(error.message);
+          // Check for email not confirmed error
+          if (error.message.includes('Email not confirmed')) {
+            toast.error('Please verify your email before signing in. Check your inbox for the verification link.');
+          } else {
+            toast.error(error.message);
+          }
         } else {
           navigate('/');
         }
@@ -47,6 +79,10 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBlur = (field: 'email' | 'password' | 'name') => {
+    setTouched(prev => ({ ...prev, [field]: true }));
   };
 
   return (
@@ -101,55 +137,84 @@ const Auth = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all"
-                  required
-                />
+              <div className="space-y-1">
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Input
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={() => handleBlur('name')}
+                    className={`pl-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all ${
+                      touched.name && !nameValidation.valid ? 'border-destructive focus:border-destructive' : ''
+                    }`}
+                  />
+                </div>
+                {touched.name && !nameValidation.valid && (
+                  <p className="text-xs text-destructive flex items-center gap-1 ml-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {nameValidation.error}
+                  </p>
+                )}
               </div>
             )}
 
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all"
-                required
-              />
+            <div className="space-y-1">
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => handleBlur('email')}
+                  className={`pl-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all ${
+                    touched.email && !emailValidation.valid ? 'border-destructive focus:border-destructive' : ''
+                  }`}
+                />
+              </div>
+              {touched.email && !emailValidation.valid && (
+                <p className="text-xs text-destructive flex items-center gap-1 ml-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {emailValidation.error}
+                </p>
+              )}
             </div>
 
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 pr-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+            <div className="space-y-1">
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => handleBlur('password')}
+                  className={`pl-12 pr-12 bg-muted/50 border-transparent hover:border-border focus:border-primary h-14 rounded-xl text-base transition-all ${
+                    touched.password && !passwordValidation.valid ? 'border-destructive focus:border-destructive' : ''
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {touched.password && !passwordValidation.valid && (
+                <p className="text-xs text-destructive flex items-center gap-1 ml-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {passwordValidation.error}
+                </p>
+              )}
             </div>
 
             <Button
               type="submit"
-              className="w-full h-14 gradient-brand font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-              disabled={loading}
+              className="w-full h-14 gradient-brand font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              disabled={loading || !isFormValid}
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -160,6 +225,12 @@ const Auth = () => {
               )}
             </Button>
           </form>
+
+          {mode === 'signup' && (
+            <p className="mt-4 text-xs text-muted-foreground text-center">
+              You'll receive a verification email to confirm your account
+            </p>
+          )}
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground text-center">
