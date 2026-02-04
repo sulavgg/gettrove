@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Settings, Loader2, MessageCircle, Moon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, Settings, MessageCircle, Moon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckInCard } from '@/components/CheckInCard';
 import { EmptyState } from '@/components/EmptyState';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { FAB } from '@/components/ui/FAB';
-import { RestDayButton } from '@/components/RestDayButton';
 import { LeaderboardTab } from '@/components/LeaderboardTab';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/PageTransition';
+import { CheckInCardSkeletonList } from '@/components/skeletons/CheckInCardSkeleton';
+import { MemberListSkeleton } from '@/components/skeletons/MemberListSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
-import { useRestDays } from '@/hooks/useRestDays';
+import { triggerHaptic } from '@/hooks/useHaptic';
 
 interface GroupInfo {
   id: string;
@@ -48,25 +50,26 @@ const GroupDetail = () => {
   const [group, setGroup] = useState<GroupInfo | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState('feed');
 
-  useEffect(() => {
-    if (id && user) {
-      fetchGroupData();
-    }
-  }, [id, user]);
-
-  const fetchGroupData = async () => {
+  const fetchGroupData = useCallback(async () => {
     if (!id || !user) return;
+
+    setError(null);
 
     try {
       // First try to get group by ID (members can view their groups via RLS)
       let groupData;
-      const { data: groupById } = await supabase
+      const { data: groupById, error: groupError } = await supabase
         .from('groups')
         .select('*')
         .eq('id', id)
         .single();
+
+      if (groupError && groupError.code !== 'PGRST116') {
+        throw groupError;
+      }
 
       if (groupById) {
         groupData = groupById;
@@ -182,24 +185,27 @@ const GroupDetail = () => {
       });
 
       setMembers(enrichedMembers);
-    } catch (error) {
-      console.error('Error fetching group:', error);
+    } catch (err: any) {
+      console.error('Error fetching group:', err);
+      setError(err.message || 'Failed to load group');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user, navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (id && user) {
+      fetchGroupData();
+    }
+  }, [id, user, fetchGroupData]);
 
-  if (!group) return null;
+  const handleRefresh = useCallback(async () => {
+    await fetchGroupData();
+  }, [fetchGroupData]);
 
-  const habit = getHabitDisplay(group.habit_type, group.custom_habit);
+  if (!loading && !group && !error) return null;
+
+  const habit = group ? getHabitDisplay(group.habit_type, group.custom_habit) : { emoji: '📌', label: 'Loading' };
   const postedCount = members.filter((m) => m.posted_today).length;
   const percentage = members.length > 0 ? Math.round((postedCount / members.length) * 100) : 0;
 
@@ -209,7 +215,10 @@ const GroupDetail = () => {
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="flex items-center justify-between px-4 py-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => {
+              triggerHaptic('light');
+              navigate('/');
+            }}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -218,7 +227,7 @@ const GroupDetail = () => {
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
               <span>{habit.emoji}</span>
-              <h1 className="font-bold text-foreground">{group.name}</h1>
+              <h1 className="font-bold text-foreground">{group?.name || 'Loading...'}</h1>
             </div>
             <p className="text-xs text-muted-foreground">
               {postedCount}/{members.length} posted today • {percentage}%
@@ -227,14 +236,16 @@ const GroupDetail = () => {
 
           <div className="flex items-center gap-2">
             <Link
-              to={`/group/${group.id}/chat`}
+              to={`/group/${group?.id}/chat`}
               className="p-2 text-muted-foreground hover:text-foreground"
+              onClick={() => triggerHaptic('light')}
             >
               <MessageCircle className="w-5 h-5" />
             </Link>
             <Link
-              to={`/group/${group.id}/settings`}
+              to={`/group/${group?.id}/settings`}
               className="p-2 text-muted-foreground hover:text-foreground"
+              onClick={() => triggerHaptic('light')}
             >
               <Settings className="w-5 h-5" />
             </Link>
@@ -242,130 +253,155 @@ const GroupDetail = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="w-full mb-6 bg-card">
-            <TabsTrigger value="feed" className="flex-1">Feed</TabsTrigger>
-            <TabsTrigger value="leaderboard" className="flex-1">Leaderboard</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="feed" className="space-y-6">
-            {/* Posted Today */}
-            {members.filter((m) => m.posted_today).length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-success uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <span>✓</span> Posted Today
-                </h2>
-                <div className="space-y-4">
-                  {members
-                    .filter((m) => m.posted_today && m.checkin)
-                    .map((member) => (
-                      <CheckInCard
-                        key={member.checkin!.id}
-                        id={member.checkin!.id}
-                        userName={member.name}
-                        userPhoto={member.photo}
-                        photoUrl={member.checkin!.photo_url}
-                        caption={member.checkin!.caption}
-                        createdAt={member.checkin!.created_at}
-                        currentStreak={member.current_streak}
-                        reactionCount={member.checkin!.reaction_count}
-                        hasReacted={member.checkin!.has_reacted}
-                        onReactionChange={fetchGroupData}
-                      />
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Resting Today */}
-            {members.filter((m) => m.rested_today && !m.posted_today).length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Moon className="w-4 h-4" /> Resting Today
-                </h2>
-                <div className="space-y-2">
-                  {members
-                    .filter((m) => m.rested_today && !m.posted_today)
-                    .map((member) => (
-                      <div
-                        key={member.user_id}
-                        className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
-                      >
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={member.photo || undefined} />
-                          <AvatarFallback className="bg-muted text-muted-foreground">
-                            {member.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">{member.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            😴 Taking a rest day • 🔥 {member.current_streak}-day streak safe
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Hasn't Posted Yet */}
-            {members.filter((m) => !m.posted_today && !m.rested_today).length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-warning uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <span>⏰</span> Hasn't Posted Yet
-                </h2>
-                <div className="space-y-2">
-                  {members
-                    .filter((m) => !m.posted_today && !m.rested_today)
-                    .map((member) => (
-                      <div
-                        key={member.user_id}
-                        className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
-                      >
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={member.photo || undefined} />
-                          <AvatarFallback className="bg-warning/20 text-warning">
-                            {member.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">{member.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {member.current_streak > 0
-                              ? `🔥 ${member.current_streak}-day streak at risk`
-                              : 'Hasn\'t started yet'}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {members.length === 0 && (
-              <EmptyState
-                emoji="📸"
-                title="No check-ins yet"
-                description="Be the first to post your check-in!"
-                actionLabel="Post Now"
-                onAction={() => navigate('/post', { state: { groupId: group.id } })}
+      <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-80px)]">
+        <PageTransition>
+          <main className="px-4 py-6">
+            {error ? (
+              <ErrorState
+                type="network"
+                message={error}
+                onRetry={fetchGroupData}
               />
-            )}
-          </TabsContent>
+            ) : (
+              <Tabs value={tab} onValueChange={setTab}>
+                <TabsList className="w-full mb-6 bg-card">
+                  <TabsTrigger value="feed" className="flex-1" onClick={() => triggerHaptic('light')}>Feed</TabsTrigger>
+                  <TabsTrigger value="leaderboard" className="flex-1" onClick={() => triggerHaptic('light')}>Leaderboard</TabsTrigger>
+                </TabsList>
 
-          <TabsContent value="leaderboard">
-            <LeaderboardTab 
-              members={members} 
-              currentUserId={user?.id} 
-              groupId={group.id}
-              groupName={group.name}
-              onRefresh={fetchGroupData}
-            />
-          </TabsContent>
-        </Tabs>
-      </main>
+                <TabsContent value="feed" className="space-y-6">
+                  {loading ? (
+                    <>
+                      <CheckInCardSkeletonList count={2} />
+                      <MemberListSkeleton count={3} />
+                    </>
+                  ) : (
+                    <>
+                      {/* Posted Today */}
+                      {members.filter((m) => m.posted_today).length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-semibold text-success uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <span>✓</span> Posted Today
+                          </h2>
+                          <StaggeredList className="space-y-4">
+                            {members
+                              .filter((m) => m.posted_today && m.checkin)
+                              .map((member) => (
+                                <StaggeredItem key={member.checkin!.id}>
+                                  <CheckInCard
+                                    id={member.checkin!.id}
+                                    userName={member.name}
+                                    userPhoto={member.photo}
+                                    photoUrl={member.checkin!.photo_url}
+                                    caption={member.checkin!.caption}
+                                    createdAt={member.checkin!.created_at}
+                                    currentStreak={member.current_streak}
+                                    reactionCount={member.checkin!.reaction_count}
+                                    hasReacted={member.checkin!.has_reacted}
+                                    onReactionChange={fetchGroupData}
+                                  />
+                                </StaggeredItem>
+                              ))}
+                          </StaggeredList>
+                        </div>
+                      )}
+
+                      {/* Resting Today */}
+                      {members.filter((m) => m.rested_today && !m.posted_today).length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <Moon className="w-4 h-4" /> Resting Today
+                          </h2>
+                          <div className="space-y-2">
+                            {members
+                              .filter((m) => m.rested_today && !m.posted_today)
+                              .map((member) => (
+                                <div
+                                  key={member.user_id}
+                                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
+                                >
+                                  <Avatar className="w-10 h-10">
+                                    <AvatarImage src={member.photo || undefined} />
+                                    <AvatarFallback className="bg-muted text-muted-foreground">
+                                      {member.name[0]}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-foreground">{member.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      😴 Taking a rest day • 🔥 {member.current_streak}-day streak safe
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Hasn't Posted Yet */}
+                      {members.filter((m) => !m.posted_today && !m.rested_today).length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-semibold text-warning uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <span>⏰</span> Hasn't Posted Yet
+                          </h2>
+                          <div className="space-y-2">
+                            {members
+                              .filter((m) => !m.posted_today && !m.rested_today)
+                              .map((member) => (
+                                <div
+                                  key={member.user_id}
+                                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
+                                >
+                                  <Avatar className="w-10 h-10">
+                                    <AvatarImage src={member.photo || undefined} />
+                                    <AvatarFallback className="bg-warning/20 text-warning">
+                                      {member.name[0]}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-foreground">{member.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {member.current_streak > 0
+                                        ? `🔥 ${member.current_streak}-day streak at risk`
+                                        : 'Hasn\'t started yet'}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {members.length === 0 && (
+                        <EmptyState
+                          emoji="📸"
+                          title="No check-ins yet"
+                          description="Be the first to post your check-in!"
+                          actionLabel="Post Now"
+                          onAction={() => {
+                            triggerHaptic('light');
+                            navigate('/post', { state: { groupId: group?.id } });
+                          }}
+                        />
+                      )}
+                    </>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="leaderboard">
+                  <LeaderboardTab 
+                    members={members} 
+                    currentUserId={user?.id} 
+                    groupId={group?.id || ''}
+                    groupName={group?.name || ''}
+                    onRefresh={fetchGroupData}
+                  />
+                </TabsContent>
+              </Tabs>
+            )}
+          </main>
+        </PageTransition>
+      </PullToRefresh>
 
       <FAB />
       <BottomNav />

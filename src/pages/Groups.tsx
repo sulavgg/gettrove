@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { EmptyState } from '@/components/EmptyState';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/PageTransition';
+import { GroupCardSkeletonList } from '@/components/skeletons/GroupCardSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
+import { triggerHaptic } from '@/hooks/useHaptic';
 
 interface GroupData {
   id: string;
@@ -22,6 +27,7 @@ const Groups = () => {
   const { user } = useAuth();
   const [groups, setGroups] = useState<GroupData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -29,14 +35,18 @@ const Groups = () => {
     }
   }, [user]);
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     if (!user) return;
 
+    setError(null);
+
     try {
-      const { data: memberships } = await supabase
+      const { data: memberships, error: membershipsError } = await supabase
         .from('group_members')
         .select('group_id')
         .eq('user_id', user.id);
+
+      if (membershipsError) throw membershipsError;
 
       if (!memberships?.length) {
         setGroups([]);
@@ -46,10 +56,12 @@ const Groups = () => {
 
       const groupIds = memberships.map((m) => m.group_id);
 
-      const { data: groupsData } = await supabase
+      const { data: groupsData, error: groupsError } = await supabase
         .from('groups')
         .select('*')
         .in('id', groupIds);
+
+      if (groupsError) throw groupsError;
 
       const enrichedGroups: GroupData[] = await Promise.all(
         (groupsData || []).map(async (group) => {
@@ -77,20 +89,17 @@ const Groups = () => {
       );
 
       setGroups(enrichedGroups);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
+    } catch (err: any) {
+      console.error('Error fetching groups:', err);
+      setError(err.message || 'Failed to load groups');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
-  }
+  const handleRefresh = useCallback(async () => {
+    await fetchGroups();
+  }, [fetchGroups]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -102,6 +111,7 @@ const Groups = () => {
             asChild
             size="sm"
             className="gap-2 gradient-primary shadow-glow"
+            onClick={() => triggerHaptic('light')}
           >
             <Link to="/create-group">
               <Plus className="w-4 h-4" />
@@ -111,50 +121,67 @@ const Groups = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6">
-        {groups.length > 0 ? (
-          <div className="space-y-3">
-            {groups.map((group) => {
-              const habit = getHabitDisplay(group.habit_type, group.custom_habit);
+      <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-80px)]">
+        <PageTransition>
+          <main className="px-4 py-6">
+            {loading ? (
+              <GroupCardSkeletonList count={4} />
+            ) : error ? (
+              <ErrorState
+                type="network"
+                message={error}
+                onRetry={fetchGroups}
+              />
+            ) : groups.length > 0 ? (
+              <StaggeredList className="space-y-3">
+                {groups.map((group) => {
+                  const habit = getHabitDisplay(group.habit_type, group.custom_habit);
 
-              return (
-                <Link key={group.id} to={`/group/${group.id}`}>
-                  <Card className="p-4 bg-card hover:bg-card/80 transition-all border-border">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <span className="text-2xl">{habit.emoji}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-foreground truncate">
-                          {group.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {group.member_count} member{group.member_count !== 1 && 's'} • {habit.label}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-warning flex items-center gap-1">
-                          {group.your_streak > 0 && <span className="animate-pulse-fire">🔥</span>}
-                          {group.your_streak}
-                        </p>
-                        <p className="text-xs text-muted-foreground">days</p>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            emoji="👥"
-            title="No groups yet"
-            description="Create or join a group to start building streaks with friends"
-            actionLabel="+ Create Group"
-            onAction={() => navigate('/create-group')}
-          />
-        )}
-      </main>
+                  return (
+                    <StaggeredItem key={group.id}>
+                      <Link to={`/group/${group.id}`} onClick={() => triggerHaptic('light')}>
+                        <Card className="p-4 bg-card hover:bg-card/80 transition-all border-border">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <span className="text-2xl">{habit.emoji}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-foreground truncate">
+                                {group.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {group.member_count} member{group.member_count !== 1 && 's'} • {habit.label}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-warning flex items-center gap-1">
+                                {group.your_streak > 0 && <span className="animate-pulse-fire">🔥</span>}
+                                {group.your_streak}
+                              </p>
+                              <p className="text-xs text-muted-foreground">days</p>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    </StaggeredItem>
+                  );
+                })}
+              </StaggeredList>
+            ) : (
+              <EmptyState
+                emoji="👥"
+                title="No groups yet"
+                description="Create or join a group to start building streaks with friends"
+                actionLabel="+ Create Group"
+                onAction={() => {
+                  triggerHaptic('light');
+                  navigate('/create-group');
+                }}
+              />
+            )}
+          </main>
+        </PageTransition>
+      </PullToRefresh>
 
       <BottomNav />
     </div>
