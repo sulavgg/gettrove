@@ -7,6 +7,7 @@ import { FAB } from '@/components/ui/FAB';
 import { GroupCard } from '@/components/GroupCard';
 import { EmptyState } from '@/components/EmptyState';
 import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
+import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, HabitType } from '@/lib/supabase';
 import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
@@ -28,7 +29,7 @@ interface GroupData {
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isEmailVerified } = useAuth();
   const [groups, setGroups] = useState<GroupData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRecapBanner, setShowRecapBanner] = useState(true);
@@ -211,6 +212,11 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Email Verification Banner */}
+      {!isEmailVerified && profile?.email && (
+        <EmailVerificationBanner email={profile.email} />
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="flex items-center justify-between px-4 py-4">

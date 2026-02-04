@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, Share2, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, Share2, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 const CreateGroup = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isEmailVerified, profile, resendVerificationEmail } = useAuth();
 
   const [step, setStep] = useState<'form' | 'invite'>('form');
   const [name, setName] = useState('');
@@ -27,6 +27,56 @@ const CreateGroup = () => {
   const [inviteCode, setInviteCode] = useState('');
   const [groupId, setGroupId] = useState('');
   const [copied, setCopied] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    const { error } = await resendVerificationEmail();
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Verification email sent!');
+    }
+    setResending(false);
+  };
+
+  // Show verification required message
+  if (!isEmailVerified) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Back</span>
+        </button>
+
+        <div className="max-w-md mx-auto text-center">
+          <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-warning" />
+          </div>
+          <h1 className="text-2xl font-black text-foreground mb-2">
+            Verify Your Email
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            You need to verify your email address before creating groups. Check your inbox at <strong>{profile?.email}</strong> for the verification link.
+          </p>
+          <Button
+            onClick={handleResendVerification}
+            disabled={resending}
+            className="w-full h-12 gradient-primary font-semibold"
+          >
+            {resending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              'Resend Verification Email'
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

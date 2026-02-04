@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Loader2, LogOut, Camera } from 'lucide-react';
+import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { WeeklyRecapViewer } from '@/components/recap/WeeklyRecapViewer';
+import { toast } from 'sonner';
 
 interface UserStats {
   activeStreaks: number;
@@ -19,7 +20,7 @@ interface UserStats {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isEmailVerified, resendVerificationEmail } = useAuth();
   const [stats, setStats] = useState<UserStats>({
     activeStreaks: 0,
     totalCheckins: 0,
@@ -27,6 +28,18 @@ const Profile = () => {
     groupsJoined: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [resending, setResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    const { error } = await resendVerificationEmail();
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Verification email sent! Check your inbox.');
+    }
+    setResending(false);
+  };
 
   useEffect(() => {
     if (user) {
@@ -110,11 +123,44 @@ const Profile = () => {
             <h2 className="text-xl font-bold text-foreground mb-1">
               {profile?.name || 'Loading...'}
             </h2>
-            <p className="text-muted-foreground text-sm">{profile?.email}</p>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">{profile?.email}</span>
+              {isEmailVerified ? (
+                <span className="flex items-center gap-1 text-success text-xs">
+                  <CheckCircle className="w-3 h-3" />
+                  Verified
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-warning text-xs">
+                  <AlertTriangle className="w-3 h-3" />
+                  Unverified
+                </span>
+              )}
+            </div>
             {profile?.created_at && (
               <p className="text-muted-foreground text-xs mt-1">
                 Member since {format(new Date(profile.created_at), 'MMM yyyy')}
               </p>
+            )}
+
+            {/* Verification action */}
+            {!isEmailVerified && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResendVerification}
+                disabled={resending}
+                className="mt-3 gap-2"
+              >
+                {resending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4" />
+                    Resend Verification Email
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </Card>
