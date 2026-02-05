@@ -162,12 +162,21 @@ const Post = () => {
   };
 
   const compressImage = async (file: File, targetSizeKB: number = 300): Promise<Blob> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
       const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
 
       img.onload = async () => {
+        // Clean up object URL
+        URL.revokeObjectURL(objectUrl);
+        
         // Calculate new dimensions (max 1080px for more aggressive compression)
         let width = img.width;
         let height = img.height;
@@ -191,19 +200,37 @@ const Post = () => {
         let quality = 0.8;
         let blob: Blob | null = null;
         
-        do {
-          blob = await new Promise<Blob | null>((res) => 
-            canvas.toBlob((b) => res(b), 'image/jpeg', quality)
-          );
-          quality -= 0.1;
-        } while (blob && blob.size > targetSizeKB * 1024 && quality > 0.3);
+        try {
+          do {
+            blob = await new Promise<Blob | null>((res) => 
+              canvas.toBlob((b) => res(b), 'image/jpeg', quality)
+            );
+            quality -= 0.1;
+          } while (blob && blob.size > targetSizeKB * 1024 && quality > 0.3);
 
-        resolve(blob || await new Promise<Blob>((res) => 
-          canvas.toBlob((b) => res(b!), 'image/jpeg', 0.5)
-        ));
+          if (!blob) {
+            blob = await new Promise<Blob | null>((res) => 
+              canvas.toBlob((b) => res(b), 'image/jpeg', 0.5)
+            );
+          }
+          
+          if (!blob) {
+            reject(new Error('Failed to compress image'));
+            return;
+          }
+          
+          resolve(blob);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Failed to load image'));
       };
 
-      img.src = URL.createObjectURL(file);
+      img.src = objectUrl;
     });
   };
 
@@ -214,19 +241,52 @@ const Post = () => {
     setUploadProgress(10);
 
     try {
-      // Compress image
-      const compressedBlob = await compressImage(photo);
+      // Compress image with error handling
+      let compressedBlob: Blob;
+      try {
+        compressedBlob = await compressImage(photo);
+      } catch (compressionError) {
+        console.error('Image compression failed:', compressionError);
+        toast.error('Failed to process image. Please try a different photo.');
+        setUploading(false);
+        return;
+      }
       setUploadProgress(30);
 
-      // Upload to storage
+      // Upload to storage with retry logic
       const fileName = `${user.id}/${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('checkin-photos')
-        .upload(fileName, compressedBlob, {
-          contentType: 'image/jpeg',
-        });
+      let uploadAttempts = 0;
+      const maxAttempts = 3;
+      let uploadError: Error | null = null;
 
-      if (uploadError) throw uploadError;
+      while (uploadAttempts < maxAttempts) {
+        uploadAttempts++;
+        const { error } = await supabase.storage
+          .from('checkin-photos')
+          .upload(fileName, compressedBlob, {
+            contentType: 'image/jpeg',
+            upsert: true, // Allow overwrite in case of retry
+          });
+
+        if (!error) {
+          uploadError = null;
+          break;
+        }
+        
+        uploadError = error;
+        console.warn(`Upload attempt ${uploadAttempts} failed:`, error.message);
+        
+        if (uploadAttempts < maxAttempts) {
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
+        }
+      }
+
+      if (uploadError) {
+        console.error('Upload failed after retries:', uploadError);
+        throw new Error('Failed to upload photo. Please check your connection and try again.');
+      }
+      
       setUploadProgress(60);
 
       // Get signed URL (bucket is now private for security)
@@ -235,7 +295,11 @@ const Post = () => {
         .from('checkin-photos')
         .createSignedUrl(fileName, 3600 * 24 * 365); // 1 year expiry
 
-      if (urlError) throw urlError;
+      if (urlError) {
+        console.error('Signed URL error:', urlError);
+        throw new Error('Failed to generate image URL. Please try again.');
+      }
+      
       const photoUrl = signedUrlData?.signedUrl;
 
       if (!photoUrl) throw new Error('Failed to generate signed URL');
@@ -243,19 +307,29 @@ const Post = () => {
       // Create checkins for each selected group
       for (const groupId of selectedGroups) {
         // Insert checkin
-        await supabase.from('checkins').insert({
+        const { error: checkinError } = await supabase.from('checkins').insert({
           user_id: user.id,
           group_id: groupId,
           photo_url: photoUrl,
           caption: caption.trim() || null,
         });
 
+        if (checkinError) {
+          console.error('Checkin insert error:', checkinError);
+          throw new Error('Failed to save check-in. Please try again.');
+        }
+
         // Update streak atomically using database function
         // This prevents race conditions when posting to multiple groups
-        await supabase.rpc('update_user_streak', {
+        const { error: streakError } = await supabase.rpc('update_user_streak', {
           p_user_id: user.id,
           p_group_id: groupId,
         });
+
+        if (streakError) {
+          console.warn('Streak update warning:', streakError);
+          // Don't throw - checkin was saved, streak update is non-critical
+        }
       }
 
       setUploadProgress(100);
@@ -271,7 +345,8 @@ const Post = () => {
       setStep('success');
     } catch (error: any) {
       console.error('Error posting:', error);
-      toast.error(error.message || 'Failed to post');
+      const message = error.message || 'Failed to post. Please try again.';
+      toast.error(message);
     } finally {
       setUploading(false);
     }
