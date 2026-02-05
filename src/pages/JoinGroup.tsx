@@ -41,7 +41,7 @@ const JoinGroup = () => {
         .rpc('lookup_group_by_invite_code', { code: code?.toUpperCase() || '' });
 
       if (groupError || !groupData || groupData.length === 0) {
-        setError('This invite link is invalid or expired');
+        setError('This invite link is invalid or invites have been disabled for this group');
         setLoading(false);
         return;
       }
