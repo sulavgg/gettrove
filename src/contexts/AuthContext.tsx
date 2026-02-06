@@ -13,6 +13,7 @@ interface Profile {
   notification_daily_time: string;
   notification_friend_activity: boolean;
   notification_milestones: boolean;
+  theme: string;
   created_at: string;
 }
 

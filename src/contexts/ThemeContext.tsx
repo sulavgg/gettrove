@@ -1,0 +1,69 @@
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+
+type Theme = 'dark' | 'light';
+
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  const { profile, updateProfile, user } = useAuth();
+  const [theme, setThemeState] = useState<Theme>('dark');
+  const [initialized, setInitialized] = useState(false);
+
+  // Initialize theme from profile or localStorage fallback
+  useEffect(() => {
+    if (profile?.theme) {
+      setThemeState(profile.theme as Theme);
+      setInitialized(true);
+    } else if (!initialized) {
+      // Fallback to localStorage for instant load before profile loads
+      const stored = localStorage.getItem('habitz-theme') as Theme | null;
+      setThemeState(stored || 'dark');
+    }
+  }, [profile?.theme]);
+
+  // Apply theme class to document
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark', 'light');
+    root.classList.add(theme);
+    // Store in localStorage for instant load on next visit
+    localStorage.setItem('habitz-theme', theme);
+  }, [theme]);
+
+  const setTheme = useCallback(async (newTheme: Theme) => {
+    setThemeState(newTheme);
+    // Persist to database if logged in
+    if (user) {
+      try {
+        await updateProfile({ theme: newTheme } as any);
+      } catch (err) {
+        console.error('Failed to save theme preference:', err);
+      }
+    }
+  }, [user, updateProfile]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }, [theme, setTheme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};

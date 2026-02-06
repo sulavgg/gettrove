@@ -6,14 +6,74 @@
 
 @layer base {
   :root {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
+    /* Light mode (default for :root, overridden by .dark) */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
 
-    --card: 240 6% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 210 17% 98%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    --border: 220 13% 87%;
+    --input: 220 14% 93%;
+    --ring: 262 83% 58%;
+
+    --radius: 1rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 93%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 220 13% 87%;
+    --sidebar-ring: 262 83% 58%;
+
+    /* Custom brand gradients */
+    --gradient-brand: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(330 81% 60%) 50%, hsl(25 95% 55%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(280 80% 55%) 100%);
+    --gradient-fire: linear-gradient(135deg, hsl(25 100% 55%) 0%, hsl(350 90% 55%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(160 70% 40%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(220 14% 93% / 0.6) 0%, hsl(220 14% 96% / 0.4) 100%);
+    
+    /* Shadows */
+    --shadow-glow: 0 0 30px hsl(262 83% 58% / 0.25);
+    --shadow-card: 0 4px 16px hsl(0 0% 0% / 0.06);
+    --shadow-elevated: 0 12px 32px hsl(0 0% 0% / 0.1);
+  }
+
+  .dark {
+    --background: 218 23% 5%;
+    --foreground: 0 0% 93%;
+
+    --card: 225 15% 11%;
+    --card-foreground: 0 0% 93%;
+
+    --popover: 225 15% 11%;
+    --popover-foreground: 0 0% 93%;
 
     --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
@@ -39,8 +99,6 @@
     --border: 240 4% 20%;
     --input: 240 5% 14%;
     --ring: 262 83% 58%;
-
-    --radius: 1rem;
 
     --sidebar-background: 240 8% 6%;
     --sidebar-foreground: 0 0% 98%;
@@ -63,51 +121,6 @@
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 20px 40px hsl(0 0% 0% / 0.6);
   }
-
-  .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 6% 10%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 240 5% 16%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 55%;
-
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
-
-    --border: 240 4% 20%;
-    --input: 240 5% 14%;
-    --ring: 262 83% 58%;
-
-    --sidebar-background: 240 8% 6%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 262 83% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 16%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 4% 20%;
-    --sidebar-ring: 262 83% 58%;
-  }
 }
 
 @layer base {
@@ -119,10 +132,11 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 300ms ease, color 300ms ease;
   }
 
   body {
-    @apply bg-background text-foreground min-h-screen;
+    @apply bg-background text-foreground min-h-screen transition-colors duration-300;
   }
 
   /* Heading font override */
@@ -183,10 +197,10 @@
 
   /* Glass card effect */
   .glass-card {
-    background: hsl(240 6% 12% / 0.7);
+    background: hsl(var(--card) / 0.7);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(240 4% 24%);
+    border: 1px solid hsl(var(--border));
   }
 
   /* Animated border gradient */

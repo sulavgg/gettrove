@@ -231,6 +231,7 @@ export type Database = {
           notification_milestones: boolean | null
           onboarding_completed: boolean | null
           profile_photo_url: string | null
+          theme: string
           updated_at: string
           user_id: string
         }
@@ -245,6 +246,7 @@ export type Database = {
           notification_milestones?: boolean | null
           onboarding_completed?: boolean | null
           profile_photo_url?: string | null
+          theme?: string
           updated_at?: string
           user_id: string
         }
@@ -259,6 +261,7 @@ export type Database = {
           notification_milestones?: boolean | null
           onboarding_completed?: boolean | null
           profile_photo_url?: string | null
+          theme?: string
           updated_at?: string
           user_id?: string
         }
