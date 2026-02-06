@@ -13,9 +13,11 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/PageTransition';
 import { CheckInCardSkeletonList } from '@/components/skeletons/CheckInCardSkeleton';
 import { MemberListSkeleton } from '@/components/skeletons/MemberListSkeleton';
+import { GroupUnlockBanner } from '@/components/GroupUnlockBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { triggerHaptic } from '@/hooks/useHaptic';
+import { useGroupUnlock } from '@/hooks/useGroupUnlock';
 
 interface GroupInfo {
   id: string;
@@ -46,7 +48,7 @@ const GroupDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-
+  const { isUnlocked, memberCount: unlockMemberCount, refetch: refetchUnlock } = useGroupUnlock(id);
   const [group, setGroup] = useState<GroupInfo | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,8 +202,8 @@ const GroupDetail = () => {
   }, [id, user, fetchGroupData]);
 
   const handleRefresh = useCallback(async () => {
-    await fetchGroupData();
-  }, [fetchGroupData]);
+    await Promise.all([fetchGroupData(), refetchUnlock()]);
+  }, [fetchGroupData, refetchUnlock]);
 
   if (!loading && !group && !error) return null;
 
@@ -277,6 +279,16 @@ const GroupDetail = () => {
                     </>
                   ) : (
                     <>
+                      {/* Group Unlock Banner */}
+                      {!isUnlocked && group && (
+                        <GroupUnlockBanner
+                          groupName={group.name}
+                          inviteCode={group.invite_code}
+                          memberCount={unlockMemberCount}
+                          members={members.map(m => ({ name: m.name, photo: m.photo }))}
+                        />
+                      )}
+
                       {/* Posted Today */}
                       {members.filter((m) => m.posted_today).length > 0 && (
                         <div>
@@ -372,7 +384,7 @@ const GroupDetail = () => {
                         </div>
                       )}
 
-                      {members.length === 0 && (
+                      {members.length === 0 && isUnlocked && (
                         <EmptyState
                           emoji="📸"
                           title="No check-ins yet"
@@ -403,7 +415,7 @@ const GroupDetail = () => {
         </PageTransition>
       </PullToRefresh>
 
-      <FAB />
+      {isUnlocked && <FAB />}
       <BottomNav />
     </div>
   );

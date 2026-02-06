@@ -12,6 +12,7 @@ import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/Pa
 import { GroupCardSkeletonList } from '@/components/skeletons/GroupCardSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, HabitType } from '@/lib/supabase';
+import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
 import { WeeklyRecapSlides } from '@/components/recap/WeeklyRecapSlides';
 import { toast } from 'sonner';
@@ -45,6 +46,7 @@ interface GroupData {
   streak_broken: boolean;
   last_checkin_time: string | null;
   week_progress: DayStatus[];
+  is_locked: boolean;
 }
 
 interface ActivityItem {
@@ -272,6 +274,7 @@ const Home = () => {
             streak_broken: streakBrokenRecently,
             last_checkin_time: userCheckin?.[0]?.created_at || null,
             week_progress: generateWeekProgress(checkinDates, restDates),
+            is_locked: (memberCount || 0) < MIN_GROUP_MEMBERS,
           };
         })
       );
@@ -409,6 +412,8 @@ const Home = () => {
   };
 
   const hasUnpostedGroups = groups.some((g) => !g.posted_today && !g.rested_today);
+  const allGroupsLocked = groups.length > 0 && groups.every(g => g.is_locked);
+  const hasAnyUnlockedUnposted = groups.some(g => !g.is_locked && !g.posted_today && !g.rested_today);
 
   // Weekly Recap Slides
   if (showRecapSlides && latestRecap) {
@@ -565,6 +570,7 @@ const Home = () => {
                           lastCheckinTime={group.last_checkin_time}
                           weekProgress={group.week_progress}
                           hoursLeft={group.posted_today || group.rested_today ? undefined : hoursLeft}
+                          isLocked={group.is_locked}
                         />
                       </StaggeredItem>
                     ))}
@@ -597,7 +603,11 @@ const Home = () => {
       <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />
 
       {/* FAB - only show if user has groups */}
-      {groups.length > 0 && <FAB pulse={hasUnpostedGroups} />}
+      {groups.length > 0 && (
+        allGroupsLocked 
+          ? <FAB locked pulse={false} />
+          : <FAB pulse={hasAnyUnlockedUnposted} />
+      )}
 
       <BottomNav />
     </div>

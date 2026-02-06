@@ -1,4 +1,4 @@
-import { Camera, Plus } from 'lucide-react';
+import { Camera, Plus, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/hooks/useHaptic';
@@ -7,9 +7,32 @@ interface FABProps {
   className?: string;
   showLabel?: boolean;
   pulse?: boolean;
+  locked?: boolean;
 }
 
-export const FAB = ({ className, showLabel = true, pulse = true }: FABProps) => {
+export const FAB = ({ className, showLabel = true, pulse = true, locked = false }: FABProps) => {
+  if (locked) {
+    return (
+      <div
+        className={cn(
+          'fixed bottom-24 right-4 z-40',
+          'flex items-center gap-2',
+          'px-5 py-4 rounded-full',
+          'bg-muted border border-border',
+          'opacity-60 cursor-not-allowed',
+          className
+        )}
+      >
+        <Lock className="w-5 h-5 text-muted-foreground" />
+        {showLabel && (
+          <span className="font-bold text-muted-foreground uppercase tracking-wide text-sm">
+            Locked
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Link
       to="/post"
