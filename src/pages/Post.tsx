@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Camera, Image, X, Loader2, Check, Moon, AlertTriangle, Mail } from 'lucide-react';
+import { ArrowLeft, Camera, Image, X, Loader2, Check, Moon, AlertTriangle, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +12,8 @@ import { CameraCapture } from '@/components/camera/CameraCapture';
 import { RestDayButton } from '@/components/RestDayButton';
 import { useRestDays } from '@/hooks/useRestDays';
 import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
+import { GroupLockedDialog } from '@/components/GroupLockedDialog';
+import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 
 interface GroupOption {
   id: string;
@@ -19,6 +21,9 @@ interface GroupOption {
   habit_type: HabitType;
   custom_habit: string | null;
   already_posted: boolean;
+  member_count: number;
+  invite_code: string;
+  is_unlocked: boolean;
 }
 
 const Post = () => {
@@ -39,6 +44,7 @@ const Post = () => {
   const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [resending, setResending] = useState(false);
+  const [lockedDialogGroup, setLockedDialogGroup] = useState<GroupOption | null>(null);
 
   const handleResendVerification = async () => {
     setResending(true);
@@ -100,12 +106,27 @@ const Post = () => {
 
       const postedGroupIds = todayCheckins?.map((c) => c.group_id) || [];
 
+      // Get member counts for all groups
+      const memberCounts: Record<string, number> = {};
+      await Promise.all(
+        groupIds.map(async (gid) => {
+          const { count } = await supabase
+            .from('group_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('group_id', gid);
+          memberCounts[gid] = count || 0;
+        })
+      );
+
       const options: GroupOption[] = (groupsData || []).map((g) => ({
         id: g.id,
         name: g.name,
         habit_type: g.habit_type as HabitType,
         custom_habit: g.custom_habit,
         already_posted: postedGroupIds.includes(g.id),
+        member_count: memberCounts[g.id] || 0,
+        invite_code: g.invite_code,
+        is_unlocked: (memberCounts[g.id] || 0) >= MIN_GROUP_MEMBERS,
       }));
 
       setGroups(options);
@@ -353,6 +374,11 @@ const Post = () => {
   };
 
   const toggleGroup = (groupId: string) => {
+    const group = groups.find((g) => g.id === groupId);
+    if (group && !group.is_unlocked) {
+      setLockedDialogGroup(group);
+      return;
+    }
     setSelectedGroups((prev) =>
       prev.includes(groupId)
         ? prev.filter((id) => id !== groupId)
@@ -454,24 +480,36 @@ const Post = () => {
     isSelected: boolean;
     onToggle: () => void;
   }) => {
+    const isLocked = !group.is_unlocked;
+
     return (
       <button
         onClick={onToggle}
         className={cn(
           'w-full flex items-center gap-3 p-4 rounded-xl border transition-all',
-          isSelected
+          isLocked
+            ? 'bg-muted/50 border-muted opacity-75'
+            : isSelected
             ? 'bg-primary/10 border-primary'
             : 'bg-card border-border hover:border-primary/50'
         )}
       >
-        <Checkbox
-          checked={isSelected}
-          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-        />
+        {isLocked ? (
+          <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+        ) : (
+          <Checkbox
+            checked={isSelected}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        )}
         <span className="text-xl">{habit.emoji}</span>
         <div className="flex-1 text-left">
           <p className="font-medium text-foreground">{group.name}</p>
-          <p className="text-sm text-muted-foreground">{habit.label}</p>
+          <p className="text-sm text-muted-foreground">
+            {isLocked
+              ? `🔒 ${group.member_count}/${MIN_GROUP_MEMBERS} members — Need ${MIN_GROUP_MEMBERS - group.member_count} more`
+              : habit.label}
+          </p>
         </div>
       </button>
     );
@@ -756,6 +794,16 @@ const Post = () => {
             )}
           </Button>
         </div>
+      )}
+      {/* Locked group dialog */}
+      {lockedDialogGroup && (
+        <GroupLockedDialog
+          open={!!lockedDialogGroup}
+          onOpenChange={(open) => !open && setLockedDialogGroup(null)}
+          groupName={lockedDialogGroup.name}
+          inviteCode={lockedDialogGroup.invite_code}
+          memberCount={lockedDialogGroup.member_count}
+        />
       )}
     </div>
   );

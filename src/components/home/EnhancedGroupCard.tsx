@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Clock, Users } from 'lucide-react';
+import { ChevronRight, Clock, Users, Lock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { WeekProgress } from './WeekProgress';
 import { getHabitDisplay, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 
 interface DayStatus {
   day: string;
@@ -27,6 +28,7 @@ interface EnhancedGroupCardProps {
   lastCheckinTime?: string | null;
   weekProgress: DayStatus[];
   hoursLeft?: number;
+  isLocked?: boolean;
 }
 
 export const EnhancedGroupCard = ({
@@ -43,11 +45,13 @@ export const EnhancedGroupCard = ({
   lastCheckinTime,
   weekProgress,
   hoursLeft,
+  isLocked,
 }: EnhancedGroupCardProps) => {
   const habit = getHabitDisplay(habitType, customHabit);
 
   // Determine card background based on status
   const getCardBackground = () => {
+    if (isLocked) return 'bg-warning/5 border-warning/20';
     if (streakBroken) return 'bg-muted/50 border-muted';
     if (postedToday) return 'bg-success/5 border-success/30';
     if (restedToday) return 'bg-muted/30 border-muted';
@@ -125,26 +129,35 @@ export const EnhancedGroupCard = ({
 
         {/* Middle Row: Last Check-in & Group Activity */}
         <div className="flex items-center gap-4 mb-3 text-sm">
-          <div
-            className={cn(
-              'flex items-center gap-1.5',
-              postedToday
-                ? 'text-success'
-                : restedToday
-                ? 'text-muted-foreground'
-                : 'text-destructive'
-            )}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span>{getLastCheckinText()}</span>
-          </div>
-          
-          <div className="flex items-center gap-1.5 text-muted-foreground ml-auto">
-            <Users className="w-3.5 h-3.5" />
-            <span>
-              {postedTodayCount}/{memberCount} posted
-            </span>
-          </div>
+          {isLocked ? (
+            <div className="flex items-center gap-1.5 text-warning">
+              <Lock className="w-3.5 h-3.5" />
+              <span>🔒 {memberCount}/{MIN_GROUP_MEMBERS} members — Invite {MIN_GROUP_MEMBERS - memberCount} more</span>
+            </div>
+          ) : (
+            <>
+              <div
+                className={cn(
+                  'flex items-center gap-1.5',
+                  postedToday
+                    ? 'text-success'
+                    : restedToday
+                    ? 'text-muted-foreground'
+                    : 'text-destructive'
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>{getLastCheckinText()}</span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 text-muted-foreground ml-auto">
+                <Users className="w-3.5 h-3.5" />
+                <span>
+                  {postedTodayCount}/{memberCount} posted
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Bottom Row: Week Progress */}
@@ -155,7 +168,9 @@ export const EnhancedGroupCard = ({
           <div
             className={cn(
               'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide',
-              postedToday
+              isLocked
+                ? 'bg-warning/20 text-warning'
+                : postedToday
                 ? 'bg-success/20 text-success'
                 : restedToday
                 ? 'bg-muted text-muted-foreground'
@@ -164,7 +179,7 @@ export const EnhancedGroupCard = ({
                 : 'bg-destructive/20 text-destructive animate-pulse'
             )}
           >
-            {postedToday ? '✓ Done' : restedToday ? '😴 Rest' : streakBroken ? 'Broken' : 'Post Now'}
+            {isLocked ? '🔒 Locked' : postedToday ? '✓ Done' : restedToday ? '😴 Rest' : streakBroken ? 'Broken' : 'Post Now'}
           </div>
         </div>
       </Card>

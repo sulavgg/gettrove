@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, Share2, Check, Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Copy, Share2, Check, Loader2, AlertTriangle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, habitTypeLabels, HabitType } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
+import { MIN_GROUP_MEMBERS } from "@/hooks/useGroupUnlock";
 
 const CreateGroup = () => {
   const navigate = useNavigate();
@@ -143,14 +145,41 @@ const CreateGroup = () => {
   };
 
   if (step === "invite") {
+    const membersNeeded = MIN_GROUP_MEMBERS - 1; // Creator is the only member
+    const progress = (1 / MIN_GROUP_MEMBERS) * 100;
+
     return (
       <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <span className="text-6xl mb-4 block animate-confetti">🎉</span>
             <h1 className="text-2xl font-black text-foreground mb-2">Group Created!</h1>
-            <p className="text-muted-foreground">Invite your crew to start competing</p>
+            <p className="text-muted-foreground">
+              Invite at least {membersNeeded} friends to start competing
+            </p>
           </div>
+
+          {/* Member progress */}
+          <Card className="p-5 bg-card border-warning/30 mb-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Posting is locked</p>
+                <p className="text-sm text-muted-foreground">
+                  Need {membersNeeded} more to unlock posting
+                </p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Members joined</span>
+                <span className="font-bold text-foreground">1/{MIN_GROUP_MEMBERS}</span>
+              </div>
+              <Progress value={progress} className="h-2.5" />
+            </div>
+          </Card>
 
           <Card className="p-6 bg-card border-border mb-6">
             <h2 className="font-bold text-foreground mb-4">{name}</h2>
