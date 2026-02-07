@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Settings, MessageCircle, Moon } from 'lucide-react';
+import { ArrowLeft, Settings, MessageCircle, Moon, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckInCard } from '@/components/CheckInCard';
@@ -16,6 +16,7 @@ import { MemberListSkeleton } from '@/components/skeletons/MemberListSkeleton';
 import { GroupUnlockBanner } from '@/components/GroupUnlockBanner';
 import { ChallengeBanner } from '@/components/challenges/ChallengeBanner';
 import { ChallengeLeaderboard } from '@/components/challenges/ChallengeLeaderboard';
+import { InviteFriendsSection } from '@/components/invite/InviteFriendsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { triggerHaptic } from '@/hooks/useHaptic';
@@ -273,6 +274,10 @@ const GroupDetail = () => {
                 <TabsList className="w-full mb-6 bg-card">
                   <TabsTrigger value="feed" className="flex-1" onClick={() => triggerHaptic('light')}>Feed</TabsTrigger>
                   <TabsTrigger value="leaderboard" className="flex-1" onClick={() => triggerHaptic('light')}>Leaderboard</TabsTrigger>
+                  <TabsTrigger value="invite" className="flex-1" onClick={() => triggerHaptic('light')}>
+                    <UserPlus className="w-3.5 h-3.5 mr-1" />
+                    Invite
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="feed" className="space-y-6">
@@ -430,6 +435,19 @@ const GroupDetail = () => {
                     groupName={group?.name || ''}
                     onRefresh={fetchGroupData}
                   />
+                </TabsContent>
+
+                <TabsContent value="invite">
+                  {group && (
+                    <InviteFriendsSection
+                      groupId={group.id}
+                      groupName={group.name}
+                      habitType={group.habit_type}
+                      customHabit={group.custom_habit}
+                      inviteCode={group.invite_code}
+                      memberCount={members.length}
+                    />
+                  )}
                 </TabsContent>
               </Tabs>
             )}
