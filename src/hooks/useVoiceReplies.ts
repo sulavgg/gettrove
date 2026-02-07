@@ -53,11 +53,19 @@ export const useVoiceReplies = (checkinId: string) => {
         }
       });
 
-      const enriched: VoiceReply[] = voiceReplies.map(r => ({
+      // Generate signed URLs for private bucket access
+      const signedUrlPromises = voiceReplies.map(r =>
+        supabase.storage
+          .from('voice-replies')
+          .createSignedUrl(r.audio_url, 3600) // 1 hour expiry
+      );
+      const signedUrlResults = await Promise.all(signedUrlPromises);
+
+      const enriched: VoiceReply[] = voiceReplies.map((r, i) => ({
         id: r.id,
         checkin_id: r.checkin_id,
         user_id: r.user_id,
-        audio_url: r.audio_url,
+        audio_url: signedUrlResults[i]?.data?.signedUrl || r.audio_url,
         duration_seconds: Number(r.duration_seconds),
         created_at: r.created_at,
         user_name: profileMap.get(r.user_id)?.name || 'Unknown',
@@ -86,16 +94,13 @@ export const useVoiceReplies = (checkinId: string) => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('voice-replies')
-        .getPublicUrl(fileName);
-
+      // Store the file path (not a public URL) since the bucket is private
       const { error: insertError } = await supabase
         .from('voice_replies')
         .insert({
           checkin_id: checkinId,
           user_id: user.id,
-          audio_url: publicUrl,
+          audio_url: fileName,
           duration_seconds: Math.round(durationSeconds * 10) / 10,
         });
 
