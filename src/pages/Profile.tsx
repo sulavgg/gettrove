@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { WeeklyRecapViewer } from '@/components/recap/WeeklyRecapViewer';
+import { ContributionCalendar } from '@/components/profile/ContributionCalendar';
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -235,6 +236,11 @@ const Profile = () => {
                       👥 {stats.groupsJoined}
                     </p>
                   </Card>
+                </div>
+
+                {/* Posting History Calendar */}
+                <div className="mb-6">
+                  <ContributionCalendar />
                 </div>
 
                 {/* Weekly Recap */}
