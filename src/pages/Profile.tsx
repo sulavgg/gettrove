@@ -122,9 +122,6 @@ const Profile = () => {
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="flex items-center justify-between px-4 py-4">
           <h1 className="text-2xl font-black text-foreground">Profile</h1>
-          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
-            <Settings className="w-5 h-5" />
-          </Button>
         </div>
       </header>
 
