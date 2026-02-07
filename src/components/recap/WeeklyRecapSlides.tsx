@@ -15,6 +15,7 @@ export interface WeekPhoto {
   caption?: string | null;
   createdAt: string;
   dayName: string;
+  groupName?: string;
 }
 
 export interface RecapData {
@@ -408,51 +409,109 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
     </div>,
 
     // Slide 6: Share
-    <div key="share" className="flex flex-col items-center justify-center min-h-full px-6 py-12">
+    <div key="share" className="flex flex-col items-center min-h-full px-4 py-10 overflow-y-auto">
       <motion.p
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-primary font-bold tracking-wider uppercase mb-8"
+        className="text-primary font-bold tracking-wider uppercase mb-4 text-sm"
       >
         Share Your Week
       </motion.p>
       
-      {/* Mini preview card with photos */}
+      {/* Shareable card — photo-forward design */}
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-xs bg-gradient-to-br from-card to-background p-6 rounded-2xl border border-border mb-8"
+        transition={{ delay: 0.15 }}
+        className="w-full max-w-sm bg-gradient-to-br from-card via-card to-background rounded-3xl border border-border overflow-hidden shadow-lg mb-6"
       >
-        {/* Mini photo grid */}
+        {/* Photo collage section */}
         {hasPhotos && (
-          <div className="grid grid-cols-4 gap-1 mb-4">
-            {data.weekPhotos.slice(0, 4).map((photo, idx) => (
-              <div
-                key={photo.id}
-                className="aspect-square rounded-md overflow-hidden bg-secondary"
-              >
-                <img
-                  src={photo.photoUrl}
-                  alt={`Check-in ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
+          <div className="relative">
+            <div className={cn(
+              "w-full",
+              data.weekPhotos.length === 1 
+                ? "" 
+                : data.weekPhotos.length <= 2 
+                  ? "grid grid-cols-2" 
+                  : data.weekPhotos.length <= 4 
+                    ? "grid grid-cols-2" 
+                    : "grid grid-cols-3"
+            )}>
+              {data.weekPhotos.slice(0, 6).map((photo, idx) => (
+                <motion.div
+                  key={photo.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.05 * idx + 0.2 }}
+                  className={cn(
+                    "relative overflow-hidden bg-secondary",
+                    data.weekPhotos.length === 1 ? "aspect-[4/3]" : "aspect-square"
+                  )}
+                >
+                  <img
+                    src={photo.photoUrl}
+                    alt={`Check-in on ${photo.dayName}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2">
+                    <p className="text-white text-[10px] font-bold uppercase tracking-wide">
+                      {photo.dayName}
+                    </p>
+                    {photo.groupName && (
+                      <p className="text-white/70 text-[9px]">{photo.groupName}</p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {data.weekPhotos.length > 6 && (
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded-full">
+                +{data.weekPhotos.length - 6}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stats section */}
+        <div className="p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground tracking-wide uppercase">My HABITZ Week</p>
+              <p className="text-xs text-muted-foreground">{data.weekRange}</p>
+            </div>
+            <span className="text-2xl">🔥</span>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <p className="text-4xl font-black text-foreground">
+              {data.daysPosted}<span className="text-xl text-muted-foreground">/7</span>
+            </p>
+            <p className="text-lg font-bold text-primary">
+              {data.currentStreak}-day streak
+            </p>
+          </div>
+          {/* Day dots */}
+          <div className="flex gap-1.5">
+            {data.dayStatuses.map((day, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-1">
+                <div className={cn(
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs",
+                  day.posted 
+                    ? "bg-primary/20 border-2 border-primary text-primary" 
+                    : "bg-muted/30 border border-muted text-muted-foreground"
+                )}>
+                  {day.posted ? '✓' : '·'}
+                </div>
+                <span className="text-[9px] text-muted-foreground">{day.day.slice(0, 2)}</span>
               </div>
             ))}
           </div>
-        )}
-        <p className="text-sm text-muted-foreground mb-2">My HABITZ Week</p>
-        <p className="text-3xl font-black text-foreground mb-1">
-          {data.daysPosted}/7 days
-        </p>
-        <p className="text-lg text-primary font-semibold mb-2">
-          🔥 {data.currentStreak}-day streak
-        </p>
-        {data.groupRank && (
-          <p className="text-muted-foreground">
-            #{data.groupRank} in my group
-          </p>
-        )}
+          {data.groupRank && data.groupTotal && (
+            <p className="text-sm text-muted-foreground">
+              Ranked <span className="font-bold text-foreground">#{data.groupRank}</span> of {data.groupTotal} in group
+            </p>
+          )}
+        </div>
       </motion.div>
 
       <motion.div

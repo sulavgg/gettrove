@@ -56,15 +56,26 @@ export const useWeeklyRecap = () => {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
     try {
+      // Fetch checkins with group info for all groups
       const { data: checkins } = await supabase
         .from('checkins')
-        .select('id, photo_url, caption, created_at')
+        .select('id, photo_url, caption, created_at, group_id')
         .eq('user_id', user.id)
         .gte('created_at', `${weekStart}T00:00:00`)
         .lte('created_at', `${weekEnd}T23:59:59`)
         .order('created_at', { ascending: true });
 
-      if (!checkins) return [];
+      if (!checkins || checkins.length === 0) return [];
+
+      // Fetch group names for all unique group_ids
+      const uniqueGroupIds = [...new Set(checkins.map(c => c.group_id))];
+      const { data: groups } = await supabase
+        .from('groups')
+        .select('id, name')
+        .in('id', uniqueGroupIds);
+      
+      const groupNameMap: Record<string, string> = {};
+      groups?.forEach(g => { groupNameMap[g.id] = g.name; });
 
       return checkins.map(c => ({
         id: c.id,
@@ -72,6 +83,7 @@ export const useWeeklyRecap = () => {
         caption: c.caption,
         createdAt: c.created_at,
         dayName: dayNames[parseISO(c.created_at).getDay()],
+        groupName: groupNameMap[c.group_id] || undefined,
       }));
     } catch (error) {
       console.error('Error fetching week photos:', error);
@@ -283,13 +295,21 @@ export const useWeeklyRecap = () => {
         earliestPostDay = withTimes[0].day;
       }
 
-      // Build week photos from checkins
+      // Build week photos from checkins with group names
+      const checkinGroupIds = [...new Set(checkins?.map(c => c.group_id) || [])];
+      const { data: checkinGroups } = checkinGroupIds.length > 0
+        ? await supabase.from('groups').select('id, name').in('id', checkinGroupIds)
+        : { data: [] };
+      const groupNameMap: Record<string, string> = {};
+      checkinGroups?.forEach(g => { groupNameMap[g.id] = g.name; });
+
       const weekPhotosData: WeekPhoto[] = checkins?.map(c => ({
         id: c.id,
         photoUrl: c.photo_url,
         caption: c.caption,
         createdAt: c.created_at,
         dayName: dayNames[parseISO(c.created_at).getDay() === 0 ? 6 : parseISO(c.created_at).getDay() - 1],
+        groupName: groupNameMap[c.group_id] || undefined,
       })) || [];
 
       return {
