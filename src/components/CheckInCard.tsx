@@ -3,6 +3,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { VoiceRepliesSection } from '@/components/voice/VoiceRepliesSection';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -139,6 +140,9 @@ export const CheckInCard = ({
           </p>
         </div>
       </div>
+
+      {/* Voice Replies */}
+      <VoiceRepliesSection checkinId={id} />
     </Card>
   );
 };
