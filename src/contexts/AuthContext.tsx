@@ -14,6 +14,7 @@ interface Profile {
   notification_friend_activity: boolean;
   notification_milestones: boolean;
   theme: string;
+  email_frequency: string;
   created_at: string;
 }
 

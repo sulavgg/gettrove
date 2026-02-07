@@ -5,3 +5,18 @@ verify_jwt = false
 
 [functions.rotate-weekly-challenges]
 verify_jwt = false
+
+[functions.send-daily-digest]
+verify_jwt = false
+
+[functions.send-streak-email]
+verify_jwt = true
+
+[functions.send-weekly-recap-email]
+verify_jwt = false
+
+[functions.send-rank-milestone-email]
+verify_jwt = true
+
+[functions.send-challenge-results-email]
+verify_jwt = false
