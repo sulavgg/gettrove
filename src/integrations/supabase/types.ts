@@ -426,6 +426,41 @@ export type Database = {
           },
         ]
       }
+      voice_replies: {
+        Row: {
+          audio_url: string
+          checkin_id: string
+          created_at: string
+          duration_seconds: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          audio_url: string
+          checkin_id: string
+          created_at?: string
+          duration_seconds: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string
+          checkin_id?: string
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_replies_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_challenges: {
         Row: {
           challenge_key: string
