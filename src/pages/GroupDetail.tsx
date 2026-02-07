@@ -14,10 +14,13 @@ import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/Pa
 import { CheckInCardSkeletonList } from '@/components/skeletons/CheckInCardSkeleton';
 import { MemberListSkeleton } from '@/components/skeletons/MemberListSkeleton';
 import { GroupUnlockBanner } from '@/components/GroupUnlockBanner';
+import { ChallengeBanner } from '@/components/challenges/ChallengeBanner';
+import { ChallengeLeaderboard } from '@/components/challenges/ChallengeLeaderboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { triggerHaptic } from '@/hooks/useHaptic';
 import { useGroupUnlock } from '@/hooks/useGroupUnlock';
+import { useWeeklyChallenge } from '@/hooks/useWeeklyChallenge';
 
 interface GroupInfo {
   id: string;
@@ -49,6 +52,7 @@ const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { isUnlocked, memberCount: unlockMemberCount, refetch: refetchUnlock } = useGroupUnlock(id);
+  const weeklyChallenge = useWeeklyChallenge(id);
   const [group, setGroup] = useState<GroupInfo | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,8 +206,8 @@ const GroupDetail = () => {
   }, [id, user, fetchGroupData]);
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([fetchGroupData(), refetchUnlock()]);
-  }, [fetchGroupData, refetchUnlock]);
+    await Promise.all([fetchGroupData(), refetchUnlock(), weeklyChallenge.refetch()]);
+  }, [fetchGroupData, refetchUnlock, weeklyChallenge.refetch]);
 
   if (!loading && !group && !error) return null;
 
@@ -279,6 +283,24 @@ const GroupDetail = () => {
                     </>
                   ) : (
                     <>
+                       {/* Weekly Challenge Banner */}
+                      {weeklyChallenge.challenge && (
+                        <ChallengeBanner
+                          challenge={weeklyChallenge.challenge}
+                          weekEnd={weeklyChallenge.weekEnd}
+                          nextChallenge={weeklyChallenge.nextChallenge}
+                        />
+                      )}
+
+                      {/* Challenge Leaderboard */}
+                      {weeklyChallenge.challenge && weeklyChallenge.scores.length > 0 && (
+                        <ChallengeLeaderboard
+                          scores={weeklyChallenge.scores}
+                          challenge={weeklyChallenge.challenge}
+                          currentUserId={user?.id}
+                        />
+                      )}
+
                       {/* Group Unlock Banner */}
                       {!isUnlocked && group && (
                         <GroupUnlockBanner

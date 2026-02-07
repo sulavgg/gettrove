@@ -1,1 +1,7 @@
 project_id = "ptkfstzetrrkkzltngao"
+
+[functions.verify-challenge-post]
+verify_jwt = false
+
+[functions.rotate-weekly-challenges]
+verify_jwt = false
