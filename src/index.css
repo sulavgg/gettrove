@@ -59,6 +59,13 @@
     --gradient-success: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(160 70% 40%) 100%);
     --gradient-glass: linear-gradient(135deg, hsl(220 14% 93% / 0.6) 0%, hsl(220 14% 96% / 0.4) 100%);
     
+    /* Calendar contribution levels */
+    --cal-empty: 220 13% 91%;
+    --cal-level-1: 257 96% 85%;
+    --cal-level-2: 258 94% 76%;
+    --cal-level-3: 258 90% 66%;
+    --cal-streak-gold: 45 93% 47%;
+
     /* Shadows */
     --shadow-glow: 0 0 30px hsl(262 83% 58% / 0.25);
     --shadow-card: 0 4px 16px hsl(0 0% 0% / 0.06);
@@ -116,6 +123,13 @@
     --gradient-success: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(160 70% 40%) 100%);
     --gradient-glass: linear-gradient(135deg, hsl(240 6% 15% / 0.6) 0%, hsl(240 6% 12% / 0.4) 100%);
     
+    /* Calendar contribution levels */
+    --cal-empty: 240 5% 20%;
+    --cal-level-1: 257 50% 40%;
+    --cal-level-2: 258 70% 55%;
+    --cal-level-3: 258 90% 66%;
+    --cal-streak-gold: 45 93% 47%;
+
     /* Shadows */
     --shadow-glow: 0 0 30px hsl(262 83% 58% / 0.4);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
