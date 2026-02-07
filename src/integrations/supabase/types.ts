@@ -46,6 +46,54 @@ export type Database = {
           },
         ]
       }
+      challenge_scores: {
+        Row: {
+          challenge_id: string
+          checkin_id: string
+          created_at: string
+          id: string
+          points: number
+          user_id: string
+          verification_reason: string | null
+          verified: boolean
+        }
+        Insert: {
+          challenge_id: string
+          checkin_id: string
+          created_at?: string
+          id?: string
+          points?: number
+          user_id: string
+          verification_reason?: string | null
+          verified?: boolean
+        }
+        Update: {
+          challenge_id?: string
+          checkin_id?: string
+          created_at?: string
+          id?: string
+          points?: number
+          user_id?: string
+          verification_reason?: string | null
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_scores_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_scores_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkins: {
         Row: {
           caption: string | null
@@ -371,6 +419,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "streaks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_challenges: {
+        Row: {
+          challenge_key: string
+          created_at: string
+          group_id: string
+          id: string
+          next_challenge_key: string | null
+          results_announced: boolean
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          challenge_key: string
+          created_at?: string
+          group_id: string
+          id?: string
+          next_challenge_key?: string | null
+          results_announced?: boolean
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          challenge_key?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          next_challenge_key?: string | null
+          results_announced?: boolean
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_challenges_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"

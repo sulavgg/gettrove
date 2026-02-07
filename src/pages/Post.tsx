@@ -324,12 +324,12 @@ const Post = () => {
       const failedGroups: string[] = [];
 
       for (const groupId of selectedGroups) {
-        const { error: checkinError } = await supabase.from('checkins').insert({
+        const { data: checkinData, error: checkinError } = await supabase.from('checkins').insert({
           user_id: user.id,
           group_id: groupId,
           photo_url: photoUrl,
           caption: caption.trim() || null,
-        });
+        }).select('id').single();
 
         if (checkinError) {
           console.error(`Checkin insert error for group ${groupId}:`, checkinError);
@@ -347,6 +347,27 @@ const Post = () => {
 
         if (streakError) {
           console.warn('Streak update warning:', streakError);
+        }
+
+        // Trigger challenge verification (non-blocking, non-critical)
+        if (checkinData?.id) {
+          supabase.functions.invoke('verify-challenge-post', {
+            body: {
+              checkin_id: checkinData.id,
+              group_id: groupId,
+              photo_url: photoUrl,
+            },
+          }).then(({ data: verifyData, error: verifyError }) => {
+            if (verifyError) {
+              console.warn('Challenge verification warning:', verifyError);
+            } else if (verifyData?.verified) {
+              toast.success(`${verifyData.challenge_key ? '⚡' : '✓'} Challenge bonus: +${verifyData.points} pts!`, {
+                duration: 3000,
+              });
+            }
+          }).catch((err) => {
+            console.warn('Challenge verification failed:', err);
+          });
         }
       }
 
