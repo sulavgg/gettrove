@@ -1,18 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Camera, Image, X, Loader2, Check, Moon, AlertTriangle, Lock, Mail } from 'lucide-react';
+import { ArrowLeft, X, Loader2, Check, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { CameraCapture } from '@/components/camera/CameraCapture';
-import { RestDayButton } from '@/components/RestDayButton';
-import { useRestDays } from '@/hooks/useRestDays';
-import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
 import { GroupLockedDialog } from '@/components/GroupLockedDialog';
+import { PostGroupSelection } from '@/components/post/PostGroupSelection';
 import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 
 interface GroupOption {
@@ -46,6 +42,15 @@ const Post = () => {
   const [resending, setResending] = useState(false);
   const [lockedDialogGroup, setLockedDialogGroup] = useState<GroupOption | null>(null);
 
+  // Cleanup photo preview URL on unmount or when it changes
+  useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
   const handleResendVerification = async () => {
     setResending(true);
     const { error } = await resendVerificationEmail();
@@ -57,23 +62,10 @@ const Post = () => {
     setResending(false);
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchGroups();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!profile?.first_post_completed && groups.length > 0 && !loading) {
-      setShowFirstTimeGuide(true);
-    }
-  }, [profile, groups, loading]);
-
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     if (!user) return;
 
     try {
-      // Get user's groups
       const { data: memberships } = await supabase
         .from('group_members')
         .select('group_id')
@@ -86,18 +78,16 @@ const Post = () => {
 
       const groupIds = memberships.map((m) => m.group_id);
 
-      // Get group details
       const { data: groupsData } = await supabase
         .from('groups')
         .select('*')
         .in('id', groupIds);
 
-      // Get today's date
+      // Get today's date in local timezone
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Check which groups user already posted to today
       const { data: todayCheckins } = await supabase
         .from('checkins')
         .select('group_id')
@@ -106,7 +96,7 @@ const Post = () => {
 
       const postedGroupIds = todayCheckins?.map((c) => c.group_id) || [];
 
-      // Get member counts for all groups
+      // Get member counts for all groups in parallel
       const memberCounts: Record<string, number> = {};
       await Promise.all(
         groupIds.map(async (gid) => {
@@ -144,39 +134,50 @@ const Post = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, location.state]);
+
+  useEffect(() => {
+    if (user) {
+      fetchGroups();
+    }
+  }, [user, fetchGroups]);
+
+  useEffect(() => {
+    if (!profile?.first_post_completed && groups.length > 0 && !loading) {
+      setShowFirstTimeGuide(true);
+    }
+  }, [profile, groups, loading]);
+
+  const setPhotoWithCleanup = useCallback((file: File | null) => {
+    // Revoke old preview URL before creating new one
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
+    setPhoto(file);
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please select an image file');
         return;
       }
-
-      setPhoto(file);
-      setPhotoPreview(URL.createObjectURL(file));
+      setPhotoWithCleanup(file);
       setShowCamera(false);
       setStep('caption');
     }
   };
 
   const handleCameraCapture = (file: File) => {
-    setPhoto(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    setPhotoWithCleanup(file);
     setShowCamera(false);
     setStep('caption');
   };
 
-  const handleOpenCamera = () => {
-    setShowCamera(true);
-  };
-
-  const handleCloseCamera = () => {
-    setShowCamera(false);
-  };
-
+  const handleOpenCamera = () => setShowCamera(true);
+  const handleCloseCamera = () => setShowCamera(false);
   const handleGalleryFromCamera = () => {
     setShowCamera(false);
     fileInputRef.current?.click();
@@ -190,15 +191,13 @@ const Post = () => {
         reject(new Error('Failed to get canvas context'));
         return;
       }
-      
+
       const img = new window.Image();
       const objectUrl = URL.createObjectURL(file);
 
       img.onload = async () => {
-        // Clean up object URL
         URL.revokeObjectURL(objectUrl);
-        
-        // Calculate new dimensions (max 1080px for more aggressive compression)
+
         let width = img.width;
         let height = img.height;
         const maxSize = 1080;
@@ -217,35 +216,34 @@ const Post = () => {
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Iteratively compress to target size
         let quality = 0.8;
         let blob: Blob | null = null;
-        
+
         try {
           do {
-            blob = await new Promise<Blob | null>((res) => 
+            blob = await new Promise<Blob | null>((res) =>
               canvas.toBlob((b) => res(b), 'image/jpeg', quality)
             );
             quality -= 0.1;
           } while (blob && blob.size > targetSizeKB * 1024 && quality > 0.3);
 
           if (!blob) {
-            blob = await new Promise<Blob | null>((res) => 
+            blob = await new Promise<Blob | null>((res) =>
               canvas.toBlob((b) => res(b), 'image/jpeg', 0.5)
             );
           }
-          
+
           if (!blob) {
             reject(new Error('Failed to compress image'));
             return;
           }
-          
+
           resolve(blob);
         } catch (error) {
           reject(error);
         }
       };
-      
+
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
         reject(new Error('Failed to load image'));
@@ -262,7 +260,7 @@ const Post = () => {
     setUploadProgress(10);
 
     try {
-      // Compress image with error handling
+      // Compress image
       let compressedBlob: Blob;
       try {
         compressedBlob = await compressImage(photo);
@@ -286,20 +284,19 @@ const Post = () => {
           .from('checkin-photos')
           .upload(fileName, compressedBlob, {
             contentType: 'image/jpeg',
-            upsert: true, // Allow overwrite in case of retry
+            upsert: true,
           });
 
         if (!error) {
           uploadError = null;
           break;
         }
-        
+
         uploadError = error;
         console.warn(`Upload attempt ${uploadAttempts} failed:`, error.message);
-        
+
         if (uploadAttempts < maxAttempts) {
-          // Wait before retry (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
+          await new Promise((resolve) => setTimeout(resolve, 1000 * uploadAttempts));
         }
       }
 
@@ -307,27 +304,26 @@ const Post = () => {
         console.error('Upload failed after retries:', uploadError);
         throw new Error('Failed to upload photo. Please check your connection and try again.');
       }
-      
+
       setUploadProgress(60);
 
-      // Get signed URL (bucket is now private for security)
-      // Using 1-year expiry for better UX with persistent content
+      // Get signed URL
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('checkin-photos')
-        .createSignedUrl(fileName, 3600 * 24 * 365); // 1 year expiry
+        .createSignedUrl(fileName, 3600 * 24 * 365);
 
-      if (urlError) {
+      if (urlError || !signedUrlData?.signedUrl) {
         console.error('Signed URL error:', urlError);
         throw new Error('Failed to generate image URL. Please try again.');
       }
-      
-      const photoUrl = signedUrlData?.signedUrl;
 
-      if (!photoUrl) throw new Error('Failed to generate signed URL');
+      const photoUrl = signedUrlData.signedUrl;
 
-      // Create checkins for each selected group
+      // Create checkins for each selected group, tracking successes/failures
+      const succeededGroups: string[] = [];
+      const failedGroups: string[] = [];
+
       for (const groupId of selectedGroups) {
-        // Insert checkin
         const { error: checkinError } = await supabase.from('checkins').insert({
           user_id: user.id,
           group_id: groupId,
@@ -336,12 +332,14 @@ const Post = () => {
         });
 
         if (checkinError) {
-          console.error('Checkin insert error:', checkinError);
-          throw new Error('Failed to save check-in. Please try again.');
+          console.error(`Checkin insert error for group ${groupId}:`, checkinError);
+          failedGroups.push(groupId);
+          continue; // Try remaining groups instead of throwing
         }
 
-        // Update streak atomically using database function
-        // This prevents race conditions when posting to multiple groups
+        succeededGroups.push(groupId);
+
+        // Update streak (non-critical)
         const { error: streakError } = await supabase.rpc('update_user_streak', {
           p_user_id: user.id,
           p_group_id: groupId,
@@ -349,19 +347,29 @@ const Post = () => {
 
         if (streakError) {
           console.warn('Streak update warning:', streakError);
-          // Don't throw - checkin was saved, streak update is non-critical
         }
       }
 
       setUploadProgress(100);
+
+      // Handle results
+      if (succeededGroups.length === 0) {
+        throw new Error('Failed to post to any group. Please try again.');
+      }
 
       // Mark first post completed
       if (!profile?.first_post_completed) {
         await updateProfile({ first_post_completed: true });
       }
 
-      // Success toast notification
-      toast.success('✓ Posted! Streak secured. 🔥');
+      if (failedGroups.length > 0) {
+        const failedNames = failedGroups
+          .map((id) => groups.find((g) => g.id === id)?.name || 'Unknown')
+          .join(', ');
+        toast.warning(`Posted to ${succeededGroups.length} group(s), but failed for: ${failedNames}`);
+      } else {
+        toast.success('✓ Posted! Streak secured. 🔥');
+      }
 
       setStep('success');
     } catch (error: any) {
@@ -388,166 +396,7 @@ const Post = () => {
 
   const availableGroups = groups.filter((g) => !g.already_posted);
 
-  // Component for group selection with rest day options
-  const PostGroupSelection = ({
-    availableGroups,
-    selectedGroups,
-    toggleGroup,
-    onOpenCamera,
-    onOpenGallery,
-  }: {
-    availableGroups: GroupOption[];
-    selectedGroups: string[];
-    toggleGroup: (id: string) => void;
-    onOpenCamera: () => void;
-    onOpenGallery: () => void;
-  }) => {
-    const { user } = useAuth();
-
-    return (
-      <div className="max-w-md mx-auto">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-          Select groups to post to
-        </h2>
-
-        <div className="space-y-3 mb-8">
-          {availableGroups.map((group) => {
-            const habit = getHabitDisplay(group.habit_type, group.custom_habit);
-            const isSelected = selectedGroups.includes(group.id);
-
-            return (
-              <GroupSelectionItem
-                key={group.id}
-                group={group}
-                habit={habit}
-                isSelected={isSelected}
-                onToggle={() => toggleGroup(group.id)}
-              />
-            );
-          })}
-        </div>
-
-        {selectedGroups.length > 0 && (
-          <div className="space-y-3">
-            <Button
-              onClick={onOpenCamera}
-              className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow gap-2"
-            >
-              <Camera className="w-5 h-5" />
-              Take Photo
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onOpenGallery}
-              className="w-full h-12 gap-2"
-            >
-              <Image className="w-5 h-5" />
-              Upload from Gallery
-            </Button>
-          </div>
-        )}
-
-        {/* Rest day section */}
-        {selectedGroups.length === 0 && availableGroups.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-border">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
-              <Moon className="w-4 h-4" />
-              Or take a rest day
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Need a break? Use a rest day to preserve your streak without posting. You get 2 rest days per week per group.
-            </p>
-            <div className="space-y-2">
-              {availableGroups.map((group) => (
-                <RestDayItem key={group.id} group={group} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Individual group selection item
-  const GroupSelectionItem = ({
-    group,
-    habit,
-    isSelected,
-    onToggle,
-  }: {
-    group: GroupOption;
-    habit: { emoji: string; label: string };
-    isSelected: boolean;
-    onToggle: () => void;
-  }) => {
-    const isLocked = !group.is_unlocked;
-
-    return (
-      <button
-        onClick={onToggle}
-        className={cn(
-          'w-full flex items-center gap-3 p-4 rounded-xl border transition-all',
-          isLocked
-            ? 'bg-muted/50 border-muted opacity-75'
-            : isSelected
-            ? 'bg-primary/10 border-primary'
-            : 'bg-card border-border hover:border-primary/50'
-        )}
-      >
-        {isLocked ? (
-          <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-        ) : (
-          <Checkbox
-            checked={isSelected}
-            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-          />
-        )}
-        <span className="text-xl">{habit.emoji}</span>
-        <div className="flex-1 text-left">
-          <p className="font-medium text-foreground">{group.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {isLocked
-              ? `🔒 ${group.member_count}/${MIN_GROUP_MEMBERS} members — Need ${MIN_GROUP_MEMBERS - group.member_count} more`
-              : habit.label}
-          </p>
-        </div>
-      </button>
-    );
-  };
-
-  // Rest day item for a single group
-  const RestDayItem = ({ group }: { group: GroupOption }) => {
-    const { restDaysRemaining, hasRestedToday, loading, takeRestDay } = useRestDays(group.id);
-    const habit = getHabitDisplay(group.habit_type, group.custom_habit);
-
-    if (loading) {
-      return (
-        <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          <span className="text-muted-foreground">Loading...</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
-        <span className="text-lg">{habit.emoji}</span>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground text-sm truncate">{group.name}</p>
-        </div>
-        <RestDayButton
-          groupName={group.name}
-          restDaysRemaining={restDaysRemaining}
-          hasRestedToday={hasRestedToday}
-          alreadyPosted={false}
-          onTakeRestDay={takeRestDay}
-          variant="compact"
-        />
-      </div>
-    );
-  };
-
-  // Verification required check
+  // Verification required
   if (!isEmailVerified) {
     return (
       <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
@@ -558,27 +407,21 @@ const Post = () => {
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
-
         <div className="max-w-md mx-auto text-center">
           <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-8 h-8 text-warning" />
           </div>
-          <h1 className="text-2xl font-black text-foreground mb-2">
-            Verify Your Email
-          </h1>
+          <h1 className="text-2xl font-black text-foreground mb-2">Verify Your Email</h1>
           <p className="text-muted-foreground mb-6">
-            You need to verify your email address before posting check-ins. Check your inbox at <strong>{profile?.email}</strong> for the verification link.
+            You need to verify your email address before posting check-ins. Check your inbox at{' '}
+            <strong>{profile?.email}</strong> for the verification link.
           </p>
           <Button
             onClick={handleResendVerification}
             disabled={resending}
             className="w-full h-12 gradient-primary font-semibold"
           >
-            {resending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              'Resend Verification Email'
-            )}
+            {resending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Resend Verification Email'}
           </Button>
         </div>
       </div>
@@ -593,7 +436,6 @@ const Post = () => {
     );
   }
 
-  // Camera view
   if (showCamera) {
     return (
       <CameraCapture
@@ -604,19 +446,14 @@ const Post = () => {
     );
   }
 
-  // Success screen
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <div className="animate-confetti">
           <span className="text-7xl">🔥</span>
         </div>
-        <h1 className="text-2xl font-black text-foreground mt-6 mb-2">
-          Streak Secured!
-        </h1>
-        <p className="text-muted-foreground text-center mb-8">
-          Great job! Keep it up tomorrow.
-        </p>
+        <h1 className="text-2xl font-black text-foreground mt-6 mb-2">Streak Secured!</h1>
+        <p className="text-muted-foreground text-center mb-8">Great job! Keep it up tomorrow.</p>
         <Button
           onClick={() => navigate('/')}
           className="gradient-primary shadow-glow font-bold uppercase tracking-wide"
@@ -627,7 +464,6 @@ const Post = () => {
     );
   }
 
-  // First time guide
   if (showFirstTimeGuide) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
@@ -662,7 +498,6 @@ const Post = () => {
     );
   }
 
-  // No available groups
   if (availableGroups.length === 0) {
     return (
       <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
@@ -673,12 +508,9 @@ const Post = () => {
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
-
         <div className="flex flex-col items-center justify-center py-12">
           <Check className="w-16 h-16 text-success mb-4" />
-          <h1 className="text-xl font-bold text-foreground mb-2">
-            All caught up!
-          </h1>
+          <h1 className="text-xl font-bold text-foreground mb-2">All caught up!</h1>
           <p className="text-muted-foreground text-center mb-6">
             You've posted to all your groups today. Come back tomorrow!
           </p>
@@ -696,8 +528,7 @@ const Post = () => {
           onClick={() => {
             if (step === 'caption') {
               setStep('select');
-              setPhoto(null);
-              setPhotoPreview(null);
+              setPhotoWithCleanup(null);
             } else {
               navigate(-1);
             }
@@ -740,8 +571,7 @@ const Post = () => {
             />
             <button
               onClick={() => {
-                setPhoto(null);
-                setPhotoPreview(null);
+                setPhotoWithCleanup(null);
                 setStep('select');
               }}
               className="absolute top-2 right-2 p-2 bg-background/80 rounded-full"
@@ -762,9 +592,7 @@ const Post = () => {
               className="bg-input border-border resize-none"
               rows={3}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              {caption.length}/100 characters
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{caption.length}/100 characters</p>
           </div>
 
           {/* Upload progress */}
@@ -787,14 +615,11 @@ const Post = () => {
             disabled={uploading}
             className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow"
           >
-            {uploading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              'Post Now'
-            )}
+            {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Post Now'}
           </Button>
         </div>
       )}
+
       {/* Locked group dialog */}
       {lockedDialogGroup && (
         <GroupLockedDialog
