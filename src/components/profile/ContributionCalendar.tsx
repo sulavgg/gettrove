@@ -11,7 +11,9 @@ import {
 } from '@/components/ui/tooltip';
 import { CalendarStats } from './CalendarStats';
 import { DayDetailDialog } from './DayDetailDialog';
+import { ShareableCalendarCard } from './ShareableCalendarCard';
 import { usePostingHistory, ViewRange, DayData } from '@/hooks/usePostingHistory';
+import { useAuth } from '@/contexts/AuthContext';
 import { habitTypeLabels, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +43,7 @@ export const ContributionCalendar = () => {
   const [viewRange, setViewRange] = useState<ViewRange>(90);
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { profile } = useAuth();
 
   const {
     calendarDays,
@@ -130,18 +133,26 @@ export const ContributionCalendar = () => {
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Posting History
         </h3>
-        <div className="flex gap-1">
-          {VIEW_OPTIONS.map(opt => (
-            <Button
-              key={opt.value}
-              variant={viewRange === opt.value ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 px-2.5 text-xs"
-              onClick={() => setViewRange(opt.value)}
-            >
-              {opt.label}
-            </Button>
-          ))}
+        <div className="flex items-center gap-2">
+          <ShareableCalendarCard
+            stats={stats}
+            viewRange={viewRange}
+            calendarDays={calendarDays}
+            userName={profile?.name || 'User'}
+          />
+          <div className="flex gap-1">
+            {VIEW_OPTIONS.map(opt => (
+              <Button
+                key={opt.value}
+                variant={viewRange === opt.value ? 'default' : 'ghost'}
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setViewRange(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
