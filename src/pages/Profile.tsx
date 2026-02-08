@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { WeeklyRecapViewer } from '@/components/recap/WeeklyRecapViewer';
 import { ContributionCalendar } from '@/components/profile/ContributionCalendar';
-import { EmailNotificationSettings } from '@/components/profile/EmailNotificationSettings';
+
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -284,8 +284,6 @@ const Profile = () => {
                   </Card>
                 </div>
 
-                {/* Email Notification Settings */}
-                <EmailNotificationSettings />
 
                 {/* Settings */}
                 <div className="mb-6">
