@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import type { VoiceReply } from '@/hooks/useVoiceReplies';
 
 interface VoiceReplyPlayerProps {
@@ -10,6 +11,7 @@ interface VoiceReplyPlayerProps {
   isActive: boolean;
   onPlay: () => void;
   onEnded: () => void;
+  onDelete?: (replyId: string) => void;
   speedRate?: number;
 }
 
@@ -24,8 +26,11 @@ export const VoiceReplyPlayer = ({
   isActive,
   onPlay,
   onEnded,
+  onDelete,
   speedRate = 1,
 }: VoiceReplyPlayerProps) => {
+  const { user } = useAuth();
+  const isOwner = user?.id === reply.user_id;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -145,6 +150,15 @@ export const VoiceReplyPlayer = ({
           <span className="text-xs text-muted-foreground shrink-0">
             {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
           </span>
+          {isOwner && onDelete && (
+            <button
+              onClick={() => onDelete(reply.id)}
+              className="ml-auto text-muted-foreground hover:text-destructive transition-colors shrink-0"
+              aria-label="Delete voice reply"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2 bg-muted/50 rounded-xl p-2 border border-border/50">
