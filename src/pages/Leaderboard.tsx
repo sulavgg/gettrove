@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { EmptyState } from '@/components/EmptyState';
@@ -13,6 +14,7 @@ import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PageTransition, StaggeredList, StaggeredItem } from '@/components/ui/PageTransition';
 import { LeaderboardSkeleton } from '@/components/skeletons/LeaderboardSkeleton';
+import { StreaksLeaderboard } from '@/components/leaderboard/StreaksLeaderboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -42,6 +44,7 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [loadingEntries, setLoadingEntries] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('overall');
 
   useEffect(() => {
     if (user) {
@@ -50,10 +53,10 @@ const Leaderboard = () => {
   }, [user]);
 
   useEffect(() => {
-    if (selectedGroup) {
+    if (selectedGroup && activeTab === 'overall') {
       fetchLeaderboard();
     }
-  }, [selectedGroup]);
+  }, [selectedGroup, activeTab]);
 
   const fetchGroups = async () => {
     if (!user) return;
@@ -106,30 +109,18 @@ const Leaderboard = () => {
     setError(null);
 
     try {
-      // Get today's date
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Get members
-      const { data: members } = await supabase
-        .from('group_members')
-        .select('user_id')
-        .eq('group_id', selectedGroup);
-
-      const memberIds = members?.map((m) => m.user_id) || [];
-
-      // Use secure RPC function to get public profile data (excludes email, enforces auth)
       const { data: profiles } = await supabase
         .rpc('get_group_member_profiles', { p_group_id: selectedGroup });
 
-      // Get streaks
       const { data: streaks } = await supabase
         .from('streaks')
         .select('user_id, current_streak, total_checkins')
         .eq('group_id', selectedGroup);
 
-      // Get today's checkins
       const { data: todayCheckins } = await supabase
         .from('checkins')
         .select('user_id')
@@ -150,7 +141,6 @@ const Leaderboard = () => {
         };
       });
 
-      // Sort by streak, then total checkins
       leaderboardData.sort((a, b) => {
         if (b.current_streak !== a.current_streak) {
           return b.current_streak - a.current_streak;
@@ -168,12 +158,13 @@ const Leaderboard = () => {
   }, [selectedGroup]);
 
   const handleRefresh = useCallback(async () => {
-    await fetchLeaderboard();
-  }, [fetchLeaderboard]);
+    if (activeTab === 'overall') {
+      await fetchLeaderboard();
+    }
+  }, [fetchLeaderboard, activeTab]);
 
   const selectedGroupData = groups.find((g) => g.id === selectedGroup);
 
-  // Calculate group stats
   const avgStreak = entries.length > 0
     ? Math.round(entries.reduce((sum, e) => sum + e.current_streak, 0) / entries.length)
     : 0;
@@ -181,20 +172,19 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-black text-foreground mb-4">Leaderboard</h1>
 
           {groups.length > 0 && (
-            <Select 
-              value={selectedGroup} 
+            <Select
+              value={selectedGroup}
               onValueChange={(value) => {
                 triggerHaptic('light');
                 setSelectedGroup(value);
               }}
             >
-              <SelectTrigger className="bg-input border-border">
+              <SelectTrigger className="bg-input border-border mb-3">
                 <SelectValue placeholder="Select a group" />
               </SelectTrigger>
               <SelectContent>
@@ -211,6 +201,15 @@ const Leaderboard = () => {
                 })}
               </SelectContent>
             </Select>
+          )}
+
+          {groups.length > 0 && (
+            <Tabs value={activeTab} onValueChange={(v) => { triggerHaptic('light'); setActiveTab(v); }}>
+              <TabsList className="w-full">
+                <TabsTrigger value="overall" className="flex-1">📊 Overall</TabsTrigger>
+                <TabsTrigger value="streaks" className="flex-1">🔥 Streaks</TabsTrigger>
+              </TabsList>
+            </Tabs>
           )}
         </div>
       </header>
@@ -232,6 +231,8 @@ const Leaderboard = () => {
                 message={error}
                 onRetry={fetchLeaderboard}
               />
+            ) : activeTab === 'streaks' ? (
+              <StreaksLeaderboard groupId={selectedGroup} />
             ) : loadingEntries ? (
               <LeaderboardSkeleton count={5} />
             ) : (
@@ -273,7 +274,6 @@ const Leaderboard = () => {
                               : 'bg-card border-border'
                           )}
                         >
-                          {/* Rank */}
                           <div className="w-8 text-center flex-shrink-0">
                             {medal ? (
                               <span className="text-xl">{medal}</span>
@@ -282,7 +282,6 @@ const Leaderboard = () => {
                             )}
                           </div>
 
-                          {/* Avatar */}
                           <Avatar className="w-10 h-10 flex-shrink-0">
                             <AvatarImage src={entry.photo || undefined} />
                             <AvatarFallback className="bg-primary/20 text-primary">
@@ -290,7 +289,6 @@ const Leaderboard = () => {
                             </AvatarFallback>
                           </Avatar>
 
-                          {/* Info */}
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-foreground truncate">
                               {entry.name}
@@ -301,7 +299,6 @@ const Leaderboard = () => {
                             </p>
                           </div>
 
-                          {/* Streak */}
                           <div className="text-right flex-shrink-0">
                             <p className="font-bold text-warning flex items-center gap-1">
                               {entry.current_streak > 0 && (
