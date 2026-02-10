@@ -116,6 +116,38 @@ export const useVoiceReplies = (checkinId: string) => {
     }
   }, [user, checkinId, fetchReplies]);
 
+  const deleteVoiceReply = useCallback(async (replyId: string) => {
+    if (!user) return false;
+    try {
+      // Find the reply to get the audio file path
+      const reply = replies.find(r => r.id === replyId);
+      
+      const { error } = await supabase
+        .from('voice_replies')
+        .delete()
+        .eq('id', replyId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Try to delete the audio file from storage
+      if (reply) {
+        // The audio_url stored is the file path
+        const filePath = reply.audio_url.includes('voice-replies') ? reply.audio_url : undefined;
+        if (filePath) {
+          await supabase.storage.from('voice-replies').remove([filePath]);
+        }
+      }
+
+      setReplies(prev => prev.filter(r => r.id !== replyId));
+      setReplyCount(prev => prev - 1);
+      return true;
+    } catch (err) {
+      console.error('Error deleting voice reply:', err);
+      return false;
+    }
+  }, [user, replies]);
+
   // Fetch count on mount
   useEffect(() => {
     if (checkinId) {
@@ -161,5 +193,6 @@ export const useVoiceReplies = (checkinId: string) => {
     uploading,
     fetchReplies,
     uploadVoiceReply,
+    deleteVoiceReply,
   };
 };

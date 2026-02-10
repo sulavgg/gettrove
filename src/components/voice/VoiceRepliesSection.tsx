@@ -14,7 +14,7 @@ interface VoiceRepliesSectionProps {
 }
 
 export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => {
-  const { replies, replyCount, loading, uploading, fetchReplies, uploadVoiceReply } = useVoiceReplies(checkinId);
+  const { replies, replyCount, loading, uploading, fetchReplies, uploadVoiceReply, deleteVoiceReply } = useVoiceReplies(checkinId);
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
@@ -59,6 +59,15 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
       // The player will auto-play when it becomes active
     } else {
       setActiveReplyId(null);
+    }
+  };
+
+  const handleDelete = async (replyId: string) => {
+    const success = await deleteVoiceReply(replyId);
+    if (success) {
+      toast.success('Voice reply deleted');
+    } else {
+      toast.error('Failed to delete voice reply');
     }
   };
 
@@ -160,6 +169,7 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
                       isActive={activeReplyId === reply.id}
                       onPlay={() => handlePlay(reply.id)}
                       onEnded={() => handleEnded(index)}
+                      onDelete={handleDelete}
                       speedRate={speedRate}
                     />
                   ))}
