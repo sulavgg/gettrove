@@ -486,6 +486,7 @@ export type Database = {
           created_at: string
           duration_seconds: number
           id: string
+          parent_reply_id: string | null
           user_id: string
         }
         Insert: {
@@ -494,6 +495,7 @@ export type Database = {
           created_at?: string
           duration_seconds: number
           id?: string
+          parent_reply_id?: string | null
           user_id: string
         }
         Update: {
@@ -502,6 +504,7 @@ export type Database = {
           created_at?: string
           duration_seconds?: number
           id?: string
+          parent_reply_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -510,6 +513,45 @@ export type Database = {
             columns: ["checkin_id"]
             isOneToOne: false
             referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_replies_parent_reply_id_fkey"
+            columns: ["parent_reply_id"]
+            isOneToOne: false
+            referencedRelation: "voice_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_reply_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          user_id: string
+          voice_reply_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          user_id: string
+          voice_reply_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          user_id?: string
+          voice_reply_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_reply_reactions_voice_reply_id_fkey"
+            columns: ["voice_reply_id"]
+            isOneToOne: false
+            referencedRelation: "voice_replies"
             referencedColumns: ["id"]
           },
         ]

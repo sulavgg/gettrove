@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Trash2 } from 'lucide-react';
+import { Play, Pause, Trash2, Mic, Heart, Flame, ThumbsUp } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { triggerHaptic } from '@/hooks/useHaptic';
 import type { VoiceReply } from '@/hooks/useVoiceReplies';
+
+const REACTION_EMOJIS = ['💪', '🔥', '❤️'];
 
 interface VoiceReplyPlayerProps {
   reply: VoiceReply;
@@ -12,7 +15,10 @@ interface VoiceReplyPlayerProps {
   onPlay: () => void;
   onEnded: () => void;
   onDelete?: (replyId: string) => void;
+  onReact?: (replyId: string, emoji: string) => void;
+  onReplyTo?: (replyId: string) => void;
   speedRate?: number;
+  isThreaded?: boolean;
 }
 
 const formatDuration = (seconds: number) => {
@@ -27,7 +33,10 @@ export const VoiceReplyPlayer = ({
   onPlay,
   onEnded,
   onDelete,
+  onReact,
+  onReplyTo,
   speedRate = 1,
+  isThreaded = false,
 }: VoiceReplyPlayerProps) => {
   const { user } = useAuth();
   const isOwner = user?.id === reply.user_id;
@@ -35,6 +44,7 @@ export const VoiceReplyPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [showReactions, setShowReactions] = useState(false);
   const animFrameRef = useRef<number | null>(null);
 
   const initials = reply.user_name
@@ -115,7 +125,12 @@ export const VoiceReplyPlayer = ({
     setCurrentTime(audioRef.current.currentTime);
   };
 
-  // Clean up audio element on unmount
+  const handleReact = (emoji: string) => {
+    triggerHaptic('light');
+    onReact?.(reply.id, emoji);
+    setShowReactions(false);
+  };
+
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -125,16 +140,14 @@ export const VoiceReplyPlayer = ({
     };
   }, []);
 
-  // Generate fake waveform bars based on duration
   const barCount = 28;
   const bars = Array.from({ length: barCount }, (_, i) => {
-    // Generate deterministic pseudo-random heights using reply ID
     const seed = reply.id.charCodeAt(i % reply.id.length) + i;
     return 0.2 + (Math.sin(seed * 3.14) * 0.5 + 0.5) * 0.8;
   });
 
   return (
-    <div className="flex items-start gap-2.5 py-2">
+    <div className={cn('flex items-start gap-2.5 py-2', isThreaded && 'ml-10 border-l-2 border-border/50 pl-3')}>
       <Avatar className="w-8 h-8 mt-0.5 shrink-0">
         <AvatarImage src={reply.user_photo || undefined} />
         <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
@@ -162,7 +175,6 @@ export const VoiceReplyPlayer = ({
         </div>
 
         <div className="flex items-center gap-2 bg-muted/50 rounded-xl p-2 border border-border/50">
-          {/* Play/Pause button */}
           <button
             onClick={togglePlay}
             className={cn(
@@ -177,7 +189,6 @@ export const VoiceReplyPlayer = ({
             )}
           </button>
 
-          {/* Waveform seek bar */}
           <div
             className="flex-1 flex items-center gap-px h-8 cursor-pointer"
             onClick={handleSeek}
@@ -198,10 +209,71 @@ export const VoiceReplyPlayer = ({
             })}
           </div>
 
-          {/* Duration */}
           <span className="text-xs font-mono text-muted-foreground shrink-0 w-8 text-right">
             {isPlaying ? formatDuration(currentTime) : formatDuration(reply.duration_seconds)}
           </span>
+        </div>
+
+        {/* Actions row: reactions + reply button */}
+        <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+          {/* Existing reactions */}
+          {reply.reactions.map((r) => (
+            <button
+              key={r.emoji}
+              onClick={() => handleReact(r.emoji)}
+              className={cn(
+                'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-colors border',
+                r.hasReacted
+                  ? 'bg-primary/15 border-primary/30 text-primary'
+                  : 'bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted'
+              )}
+            >
+              <span>{r.emoji}</span>
+              <span className="font-medium">{r.count}</span>
+            </button>
+          ))}
+
+          {/* Add reaction button */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowReactions(!showReactions);
+                triggerHaptic('light');
+              }}
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-muted/50 border border-border/50 text-muted-foreground hover:bg-muted transition-colors text-xs"
+              aria-label="Add reaction"
+            >
+              +
+            </button>
+
+            {showReactions && (
+              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 bg-card border border-border rounded-full px-1.5 py-1 shadow-lg z-10">
+                {REACTION_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReact(emoji)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-sm"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Reply to reply button */}
+          {!isThreaded && onReplyTo && (
+            <button
+              onClick={() => {
+                onReplyTo(reply.id);
+                triggerHaptic('light');
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors ml-1"
+            >
+              <Mic className="w-3 h-3" />
+              <span>Reply</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
