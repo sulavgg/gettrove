@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Mic, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { Mic, ChevronDown, ChevronUp, Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { VoiceRecorder } from './VoiceRecorder';
 import { VoiceReplyPlayer } from './VoiceReplyPlayer';
 import { useVoiceReplies } from '@/hooks/useVoiceReplies';
@@ -14,29 +13,39 @@ interface VoiceRepliesSectionProps {
 }
 
 export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => {
-  const { replies, replyCount, loading, uploading, fetchReplies, uploadVoiceReply, deleteVoiceReply } = useVoiceReplies(checkinId);
+  const { replies, replyCount, loading, uploading, fetchReplies, uploadVoiceReply, deleteVoiceReply, toggleReaction } = useVoiceReplies(checkinId);
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [speedRate, setSpeedRate] = useState(1);
   const [repliesLoaded, setRepliesLoaded] = useState(false);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
 
-  const handleOpenRecorder = () => {
+  const replyingToUser = replyingToId ? replies.find(r => r.id === replyingToId)?.user_name : null;
+
+  const handleOpenRecorder = (parentReplyId?: string) => {
     triggerHaptic('light');
+    setReplyingToId(parentReplyId || null);
     setIsRecorderOpen(true);
   };
 
   const handleSendVoiceReply = async (blob: Blob, duration: number) => {
     triggerHaptic('medium');
-    const success = await uploadVoiceReply(blob, duration);
+    const success = await uploadVoiceReply(blob, duration, replyingToId || undefined);
     if (success) {
-      toast.success('Voice reply sent! 🎤');
+      toast.success(replyingToId ? 'Reply sent! 🎤' : 'Voice reply sent! 🎤');
       setIsRecorderOpen(false);
+      setReplyingToId(null);
       setIsExpanded(true);
       setRepliesLoaded(true);
     } else {
       toast.error('Failed to send voice reply');
     }
+  };
+
+  const handleCancelRecorder = () => {
+    setIsRecorderOpen(false);
+    setReplyingToId(null);
   };
 
   const handleExpand = useCallback(() => {
@@ -53,10 +62,9 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
   };
 
   const handleEnded = (index: number) => {
-    // Auto-play next reply
-    if (index < replies.length - 1) {
-      setActiveReplyId(replies[index + 1].id);
-      // The player will auto-play when it becomes active
+    const topLevel = replies.filter(r => !r.parent_reply_id);
+    if (index < topLevel.length - 1) {
+      setActiveReplyId(topLevel[index + 1].id);
     } else {
       setActiveReplyId(null);
     }
@@ -71,6 +79,10 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
     }
   };
 
+  const handleReplyTo = (replyId: string) => {
+    handleOpenRecorder(replyId);
+  };
+
   const cycleSpeed = () => {
     setSpeedRate(prev => {
       if (prev === 1) return 1.5;
@@ -80,12 +92,16 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
     triggerHaptic('light');
   };
 
+  // Organize replies: top-level + their children
+  const topLevelReplies = replies.filter(r => !r.parent_reply_id);
+  const childReplies = (parentId: string) => replies.filter(r => r.parent_reply_id === parentId);
+
   return (
     <div className="border-t border-border/50">
       {/* Reply button row */}
       <div className="flex items-center justify-between px-4 py-2">
         <button
-          onClick={handleOpenRecorder}
+          onClick={() => handleOpenRecorder()}
           className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
         >
           <Mic className="w-4 h-4" />
@@ -119,9 +135,20 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
             transition={{ duration: 0.2 }}
             className="overflow-hidden px-4 pb-3"
           >
+            {replyingToUser && (
+              <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
+                <span>Replying to <span className="font-medium text-foreground">{replyingToUser}</span></span>
+                <button
+                  onClick={() => setReplyingToId(null)}
+                  className="hover:text-foreground transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
             <VoiceRecorder
               onSend={handleSendVoiceReply}
-              onCancel={() => setIsRecorderOpen(false)}
+              onCancel={handleCancelRecorder}
               uploading={uploading}
             />
           </motion.div>
@@ -146,7 +173,7 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
               ) : (
                 <>
                   {/* Speed control */}
-                  {replies.length > 0 && (
+                  {topLevelReplies.length > 0 && (
                     <div className="flex justify-end mb-1">
                       <button
                         onClick={cycleSpeed}
@@ -162,16 +189,33 @@ export const VoiceRepliesSection = ({ checkinId }: VoiceRepliesSectionProps) => 
                     </div>
                   )}
 
-                  {replies.map((reply, index) => (
-                    <VoiceReplyPlayer
-                      key={reply.id}
-                      reply={reply}
-                      isActive={activeReplyId === reply.id}
-                      onPlay={() => handlePlay(reply.id)}
-                      onEnded={() => handleEnded(index)}
-                      onDelete={handleDelete}
-                      speedRate={speedRate}
-                    />
+                  {topLevelReplies.map((reply, index) => (
+                    <div key={reply.id}>
+                      <VoiceReplyPlayer
+                        reply={reply}
+                        isActive={activeReplyId === reply.id}
+                        onPlay={() => handlePlay(reply.id)}
+                        onEnded={() => handleEnded(index)}
+                        onDelete={handleDelete}
+                        onReact={toggleReaction}
+                        onReplyTo={handleReplyTo}
+                        speedRate={speedRate}
+                      />
+                      {/* Threaded child replies */}
+                      {childReplies(reply.id).map((child) => (
+                        <VoiceReplyPlayer
+                          key={child.id}
+                          reply={child}
+                          isActive={activeReplyId === child.id}
+                          onPlay={() => handlePlay(child.id)}
+                          onEnded={() => setActiveReplyId(null)}
+                          onDelete={handleDelete}
+                          onReact={toggleReaction}
+                          speedRate={speedRate}
+                          isThreaded
+                        />
+                      ))}
+                    </div>
                   ))}
                 </>
               )}
