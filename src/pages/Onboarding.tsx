@@ -7,25 +7,28 @@ import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
 
 const slides = [
   {
-    emoji: '🔥',
-    title: 'Welcome to HABITZ',
-    subtitle: 'Compete with friends. Build streaks. Don\'t quit.',
-    description: 'Post photo proof daily or lose your streak.',
+    icon: '📸',
+    title: 'Welcome to TROVE',
+    subtitle: 'Build Your Treasure Through Consistent Action',
+    description: 'Consistency is Currency. Small daily investments compound into something valuable.',
   },
   {
-    emoji: '📋',
-    title: 'How It Works',
+    title: 'How Trove Works',
     steps: [
-      { icon: '👥', text: 'Join or create a group (5-10 friends)' },
-      { icon: '🎯', text: 'Pick a habit (gym, study, wake up early, etc.)' },
-      { icon: '📸', text: 'Post photo proof every day before midnight' },
-      { icon: '🔥', text: 'Don\'t break your streak or lose everything' },
+      { icon: '📸', text: 'Post daily proof — document your habits with photos' },
+      { icon: '📊', text: 'Earn points — stack points through consistency and engagement' },
+      { icon: '🏆', text: 'Compete weekly — join challenges and win rewards' },
     ],
   },
   {
-    emoji: '🚀',
-    title: 'Get Started',
-    subtitle: 'Ready to build your first streak?',
+    title: 'Your Momentum Matters',
+    subtitle: 'Build your treasure, one day at a time.',
+    details: [
+      'Base: 25 pts per post',
+      'Bonuses for timing (optional)',
+      'Streak multipliers up to 1.5×',
+      'Engagement rewards',
+    ],
     actions: true,
   },
 ];
@@ -58,26 +61,24 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        {/* Emoji */}
-        <span className="text-7xl mb-6 animate-scale-in">{slide.emoji}</span>
+        {/* Icon / Brand */}
+        {slide.icon && (
+          <span className="text-6xl mb-6 animate-scale-in">{slide.icon}</span>
+        )}
 
-        {/* Title */}
-        <h1 className="text-3xl font-black text-foreground text-center mb-3">
+        <h1 className="text-3xl font-black text-foreground text-center mb-3 font-heading tracking-tight">
           {slide.title}
         </h1>
 
-        {/* Subtitle */}
         {slide.subtitle && (
           <p className="text-lg text-muted-foreground text-center max-w-xs">
             {slide.subtitle}
           </p>
         )}
 
-        {/* Description */}
         {slide.description && (
-          <p className="text-muted-foreground text-center mt-2 max-w-xs">
+          <p className="text-muted-foreground text-center mt-2 max-w-xs italic">
             {slide.description}
           </p>
         )}
@@ -93,6 +94,19 @@ const Onboarding = () => {
               >
                 <span className="text-2xl">{step.icon}</span>
                 <p className="text-foreground font-medium">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Points details */}
+        {slide.details && (
+          <div className="mt-6 w-full max-w-sm bg-card rounded-xl border border-border p-4 space-y-2">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Points System</p>
+            {slide.details.map((d, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm text-foreground">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                <span>{d}</span>
               </div>
             ))}
           </div>
@@ -133,7 +147,7 @@ const Onboarding = () => {
             className={cn(
               'w-2 h-2 rounded-full transition-all duration-300',
               index === currentSlide
-                ? 'w-6 bg-primary'
+                ? 'w-6 bg-gold'
                 : 'bg-muted-foreground/30'
             )}
           />
@@ -147,12 +161,11 @@ const Onboarding = () => {
             onClick={handleNext}
             className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow"
           >
-            Next
+            Continue
           </Button>
         </div>
       )}
 
-      {/* Join by Code Dialog */}
       <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />
     </div>
   );

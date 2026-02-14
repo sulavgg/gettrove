@@ -128,8 +128,8 @@ const CreateGroup = () => {
   const handleShare = async () => {
     const habit = habitTypeLabels[habitType as HabitType];
     const shareData = {
-      title: "Join my HABITZ group",
-      text: `Join my HABITZ group: ${name}. Let's compete on ${habit?.label || "our habit"}!`,
+      title: "Join my Trove group",
+      text: `Join my Trove group: ${name}. Let's compete on ${habit?.label || "our habit"}!`,
       url: inviteLink,
     };
 

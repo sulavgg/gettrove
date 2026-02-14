@@ -393,12 +393,12 @@ const Home = () => {
   const handleShareRecap = async () => {
     if (!latestRecap) return;
     
-    const shareText = `My HABITZ week: ${latestRecap.daysPosted}/7 days posted, ${latestRecap.currentStreak}-day streak! 🔥`;
+    const shareText = `My TROVE week: ${latestRecap.daysPosted}/7 days posted, ${latestRecap.currentStreak}-day streak! 🔥`;
     
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'My HABITZ Week',
+          title: 'My TROVE Week',
           text: shareText,
           url: window.location.origin,
         });
@@ -457,7 +457,7 @@ const Home = () => {
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="flex items-center justify-between px-4 py-4">
           <div>
-            <h1 className="text-2xl font-black text-gradient-primary">HABITZ</h1>
+            <h1 className="text-2xl font-black text-foreground font-heading">TROVE</h1>
             <p className="text-sm text-muted-foreground">
               Hey {profile?.name?.split(' ')[0] || 'there'}! 👋
             </p>

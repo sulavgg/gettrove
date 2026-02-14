@@ -135,7 +135,7 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
         animate={{ opacity: 1, y: 0 }}
         className="text-primary font-bold tracking-wider uppercase mb-4"
       >
-        This Week on HABITZ
+        This Week on TROVE
       </motion.p>
       <motion.p
         initial={{ opacity: 0 }}
@@ -477,7 +477,7 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
         <div className="p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground tracking-wide uppercase">My HABITZ Week</p>
+              <p className="text-xs text-muted-foreground tracking-wide uppercase">My TROVE Week</p>
               <p className="text-xs text-muted-foreground">{data.weekRange}</p>
             </div>
             <span className="text-2xl">🔥</span>

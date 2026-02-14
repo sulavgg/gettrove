@@ -22,8 +22,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       setThemeState(profile.theme as Theme);
       setInitialized(true);
     } else if (!initialized) {
-      // Fallback to localStorage for instant load before profile loads
-      const stored = localStorage.getItem('habitz-theme') as Theme | null;
+      const stored = localStorage.getItem('trove-theme') as Theme | null;
       setThemeState(stored || 'dark');
     }
   }, [profile?.theme]);
@@ -33,13 +32,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const root = document.documentElement;
     root.classList.remove('dark', 'light');
     root.classList.add(theme);
-    // Store in localStorage for instant load on next visit
-    localStorage.setItem('habitz-theme', theme);
+    localStorage.setItem('trove-theme', theme);
   }, [theme]);
 
   const setTheme = useCallback(async (newTheme: Theme) => {
     setThemeState(newTheme);
-    // Persist to database if logged in
     if (user) {
       try {
         await updateProfile({ theme: newTheme } as any);

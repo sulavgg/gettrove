@@ -35,7 +35,7 @@ export const StatsCard = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4 relative z-10">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Your Stats
+            Your Performance
           </h2>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </div>
