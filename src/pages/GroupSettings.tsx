@@ -116,8 +116,8 @@ const GroupSettings = () => {
     
     const habit = getHabitDisplay(group.habit_type, group.custom_habit);
     const shareData = {
-      title: 'Join my HABITZ group',
-      text: `Join my HABITZ group: ${group.name}. Let's compete on ${habit.label}!`,
+      title: 'Join my Trove group',
+      text: `Join my Trove group: ${group.name}. Let's compete on ${habit.label}!`,
       url: inviteLink,
     };
 

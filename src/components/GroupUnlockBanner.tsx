@@ -39,8 +39,8 @@ export const GroupUnlockBanner = ({
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Join my HABITZ group',
-      text: `Join my HABITZ group: ${groupName}. We need ${membersNeeded} more member${membersNeeded !== 1 ? 's' : ''} to start!`,
+      title: 'Join my Trove group',
+      text: `Join my Trove group: ${groupName}. We need ${membersNeeded} more member${membersNeeded !== 1 ? 's' : ''} to start!`,
       url: inviteLink,
     };
 

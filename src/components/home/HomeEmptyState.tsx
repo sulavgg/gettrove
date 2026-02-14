@@ -46,7 +46,7 @@ export const HomeEmptyState = ({ onCreateGroup, onJoinGroup }: HomeEmptyStatePro
         Ready to build your first streak?
       </h2>
       <p className="text-center text-muted-foreground mb-8 max-w-xs">
-        Compete with friends on daily habits. Don't break the chain.
+        Invest in yourself daily. Build consistency with friends.
       </p>
 
       {/* Action Buttons */}

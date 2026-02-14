@@ -48,12 +48,12 @@ export const WeeklyRecapViewer = ({ onClose }: WeeklyRecapViewerProps) => {
   const handleShare = async () => {
     if (!currentRecap) return;
 
-    const shareText = `My HABITZ week: ${currentRecap.daysPosted}/7 days posted, ${currentRecap.currentStreak}-day streak! Think you can beat me? 🔥`;
+    const shareText = `My TROVE week: ${currentRecap.daysPosted}/7 days posted, ${currentRecap.currentStreak}-day streak! Think you can beat me? 🔥`;
     
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'My HABITZ Week',
+          title: 'My TROVE Week',
           text: shareText,
           url: window.location.origin,
         });
