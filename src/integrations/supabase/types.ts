@@ -97,26 +97,32 @@ export type Database = {
       checkins: {
         Row: {
           caption: string | null
+          capture_timestamp: string | null
           created_at: string
           group_id: string
           id: string
           photo_url: string
+          selfie_url: string | null
           user_id: string
         }
         Insert: {
           caption?: string | null
+          capture_timestamp?: string | null
           created_at?: string
           group_id: string
           id?: string
           photo_url: string
+          selfie_url?: string | null
           user_id: string
         }
         Update: {
           caption?: string | null
+          capture_timestamp?: string | null
           created_at?: string
           group_id?: string
           id?: string
           photo_url?: string
+          selfie_url?: string | null
           user_id?: string
         }
         Relationships: [

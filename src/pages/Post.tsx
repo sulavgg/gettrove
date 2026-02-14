@@ -10,6 +10,7 @@ import { CameraCapture } from '@/components/camera/CameraCapture';
 import { GroupLockedDialog } from '@/components/GroupLockedDialog';
 import { PostGroupSelection } from '@/components/post/PostGroupSelection';
 import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
+import { format } from 'date-fns';
 
 interface GroupOption {
   id: string;
@@ -26,13 +27,15 @@ const Post = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, updateProfile, isEmailVerified, resendVerificationEmail } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<'select' | 'camera' | 'caption' | 'success'>('select');
   const [groups, setGroups] = useState<GroupOption[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [activityPhoto, setActivityPhoto] = useState<File | null>(null);
+  const [selfiePhoto, setSelfiePhoto] = useState<File | null>(null);
+  const [activityPreview, setActivityPreview] = useState<string | null>(null);
+  const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
+  const [captureTimestamp, setCaptureTimestamp] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -42,14 +45,13 @@ const Post = () => {
   const [resending, setResending] = useState(false);
   const [lockedDialogGroup, setLockedDialogGroup] = useState<GroupOption | null>(null);
 
-  // Cleanup photo preview URL on unmount or when it changes
+  // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
-      if (photoPreview) {
-        URL.revokeObjectURL(photoPreview);
-      }
+      if (activityPreview) URL.revokeObjectURL(activityPreview);
+      if (selfiePreview) URL.revokeObjectURL(selfiePreview);
     };
-  }, [photoPreview]);
+  }, [activityPreview, selfiePreview]);
 
   const handleResendVerification = async () => {
     setResending(true);
@@ -83,7 +85,6 @@ const Post = () => {
         .select('*')
         .in('id', groupIds);
 
-      // Get today's date in local timezone
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
@@ -96,7 +97,6 @@ const Post = () => {
 
       const postedGroupIds = todayCheckins?.map((c) => c.group_id) || [];
 
-      // Get member counts for all groups in parallel
       const memberCounts: Record<string, number> = {};
       await Promise.all(
         groupIds.map(async (gid) => {
@@ -121,7 +121,6 @@ const Post = () => {
 
       setGroups(options);
 
-      // Pre-select group from navigation state
       const stateGroupId = (location.state as any)?.groupId;
       if (stateGroupId) {
         const group = options.find((g) => g.id === stateGroupId && !g.already_posted);
@@ -148,56 +147,40 @@ const Post = () => {
     }
   }, [profile, groups, loading]);
 
-  const setPhotoWithCleanup = useCallback((file: File | null) => {
-    // Revoke old preview URL before creating new one
-    setPhotoPreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return file ? URL.createObjectURL(file) : null;
-    });
-    setPhoto(file);
-  }, []);
+  const clearPhotos = useCallback(() => {
+    if (activityPreview) URL.revokeObjectURL(activityPreview);
+    if (selfiePreview) URL.revokeObjectURL(selfiePreview);
+    setActivityPhoto(null);
+    setSelfiePhoto(null);
+    setActivityPreview(null);
+    setSelfiePreview(null);
+    setCaptureTimestamp(null);
+  }, [activityPreview, selfiePreview]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
-        return;
-      }
-      setPhotoWithCleanup(file);
-      setShowCamera(false);
-      setStep('caption');
-    }
-  };
-
-  const handleCameraCapture = (file: File) => {
-    setPhotoWithCleanup(file);
+  const handleCameraCapture = (activity: File, selfie: File, timestamp: string) => {
+    setActivityPhoto(activity);
+    setSelfiePhoto(selfie);
+    setActivityPreview(URL.createObjectURL(activity));
+    setSelfiePreview(URL.createObjectURL(selfie));
+    setCaptureTimestamp(timestamp);
     setShowCamera(false);
     setStep('caption');
   };
 
   const handleOpenCamera = () => setShowCamera(true);
   const handleCloseCamera = () => setShowCamera(false);
-  const handleGalleryFromCamera = () => {
-    setShowCamera(false);
-    fileInputRef.current?.click();
-  };
 
   const compressImage = async (file: File, targetSizeKB: number = 300): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'));
-        return;
-      }
+      if (!ctx) { reject(new Error('Failed to get canvas context')); return; }
 
       const img = new window.Image();
       const objectUrl = URL.createObjectURL(file);
 
       img.onload = async () => {
         URL.revokeObjectURL(objectUrl);
-
         let width = img.width;
         let height = img.height;
         const maxSize = 1080;
@@ -233,93 +216,59 @@ const Post = () => {
             );
           }
 
-          if (!blob) {
-            reject(new Error('Failed to compress image'));
-            return;
-          }
-
+          if (!blob) { reject(new Error('Failed to compress image')); return; }
           resolve(blob);
-        } catch (error) {
-          reject(error);
-        }
+        } catch (error) { reject(error); }
       };
 
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Failed to load image'));
-      };
-
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Failed to load image')); };
       img.src = objectUrl;
     });
   };
 
+  const uploadPhoto = async (file: File, prefix: string): Promise<string> => {
+    const compressed = await compressImage(file);
+    const fileName = `${user!.id}/${prefix}-${Date.now()}.jpg`;
+    
+    let uploadAttempts = 0;
+    let uploadError: Error | null = null;
+
+    while (uploadAttempts < 3) {
+      uploadAttempts++;
+      const { error } = await supabase.storage
+        .from('checkin-photos')
+        .upload(fileName, compressed, { contentType: 'image/jpeg', upsert: true });
+
+      if (!error) { uploadError = null; break; }
+      uploadError = error;
+      if (uploadAttempts < 3) await new Promise((r) => setTimeout(r, 1000 * uploadAttempts));
+    }
+
+    if (uploadError) throw new Error('Failed to upload photo.');
+
+    const { data, error: urlError } = await supabase.storage
+      .from('checkin-photos')
+      .createSignedUrl(fileName, 3600 * 24 * 365);
+
+    if (urlError || !data?.signedUrl) throw new Error('Failed to generate image URL.');
+    return data.signedUrl;
+  };
+
   const handlePost = async () => {
-    if (!user || !photo || selectedGroups.length === 0) return;
+    if (!user || !activityPhoto || !selfiePhoto || selectedGroups.length === 0) return;
 
     setUploading(true);
     setUploadProgress(10);
 
     try {
-      // Compress image
-      let compressedBlob: Blob;
-      try {
-        compressedBlob = await compressImage(photo);
-      } catch (compressionError) {
-        console.error('Image compression failed:', compressionError);
-        toast.error('Failed to process image. Please try a different photo.');
-        setUploading(false);
-        return;
-      }
-      setUploadProgress(30);
-
-      // Upload to storage with retry logic
-      const fileName = `${user.id}/${Date.now()}.jpg`;
-      let uploadAttempts = 0;
-      const maxAttempts = 3;
-      let uploadError: Error | null = null;
-
-      while (uploadAttempts < maxAttempts) {
-        uploadAttempts++;
-        const { error } = await supabase.storage
-          .from('checkin-photos')
-          .upload(fileName, compressedBlob, {
-            contentType: 'image/jpeg',
-            upsert: true,
-          });
-
-        if (!error) {
-          uploadError = null;
-          break;
-        }
-
-        uploadError = error;
-        console.warn(`Upload attempt ${uploadAttempts} failed:`, error.message);
-
-        if (uploadAttempts < maxAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * uploadAttempts));
-        }
-      }
-
-      if (uploadError) {
-        console.error('Upload failed after retries:', uploadError);
-        throw new Error('Failed to upload photo. Please check your connection and try again.');
-      }
+      // Upload both photos in parallel
+      const [activityUrl, selfieUrl] = await Promise.all([
+        uploadPhoto(activityPhoto, 'activity'),
+        uploadPhoto(selfiePhoto, 'selfie'),
+      ]);
 
       setUploadProgress(60);
 
-      // Get signed URL
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('checkin-photos')
-        .createSignedUrl(fileName, 3600 * 24 * 365);
-
-      if (urlError || !signedUrlData?.signedUrl) {
-        console.error('Signed URL error:', urlError);
-        throw new Error('Failed to generate image URL. Please try again.');
-      }
-
-      const photoUrl = signedUrlData.signedUrl;
-
-      // Create checkins for each selected group, tracking successes/failures
       const succeededGroups: string[] = [];
       const failedGroups: string[] = [];
 
@@ -327,66 +276,49 @@ const Post = () => {
         const { data: checkinData, error: checkinError } = await supabase.from('checkins').insert({
           user_id: user.id,
           group_id: groupId,
-          photo_url: photoUrl,
+          photo_url: activityUrl,
+          selfie_url: selfieUrl,
+          capture_timestamp: captureTimestamp,
           caption: caption.trim() || null,
-        }).select('id').single();
+        } as any).select('id').single();
 
         if (checkinError) {
           console.error(`Checkin insert error for group ${groupId}:`, checkinError);
           failedGroups.push(groupId);
-          continue; // Try remaining groups instead of throwing
+          continue;
         }
 
         succeededGroups.push(groupId);
 
-        // Update streak (non-critical)
         const { error: streakError } = await supabase.rpc('update_user_streak', {
           p_user_id: user.id,
           p_group_id: groupId,
         });
 
-        if (streakError) {
-          console.warn('Streak update warning:', streakError);
-        }
+        if (streakError) console.warn('Streak update warning:', streakError);
 
-        // Trigger challenge verification (non-blocking, non-critical)
         if (checkinData?.id) {
           supabase.functions.invoke('verify-challenge-post', {
-            body: {
-              checkin_id: checkinData.id,
-              group_id: groupId,
-              photo_url: photoUrl,
-            },
+            body: { checkin_id: checkinData.id, group_id: groupId, photo_url: activityUrl },
           }).then(({ data: verifyData, error: verifyError }) => {
-            if (verifyError) {
-              console.warn('Challenge verification warning:', verifyError);
-            } else if (verifyData?.verified) {
-              toast.success(`${verifyData.challenge_key ? '⚡' : '✓'} Challenge bonus: +${verifyData.points} pts!`, {
-                duration: 3000,
-              });
+            if (verifyError) console.warn('Challenge verification warning:', verifyError);
+            else if (verifyData?.verified) {
+              toast.success(`⚡ Challenge bonus: +${verifyData.points} pts!`, { duration: 3000 });
             }
-          }).catch((err) => {
-            console.warn('Challenge verification failed:', err);
-          });
+          }).catch((err) => console.warn('Challenge verification failed:', err));
         }
       }
 
       setUploadProgress(100);
 
-      // Handle results
-      if (succeededGroups.length === 0) {
-        throw new Error('Failed to post to any group. Please try again.');
-      }
+      if (succeededGroups.length === 0) throw new Error('Failed to post to any group.');
 
-      // Mark first post completed
       if (!profile?.first_post_completed) {
         await updateProfile({ first_post_completed: true });
       }
 
       if (failedGroups.length > 0) {
-        const failedNames = failedGroups
-          .map((id) => groups.find((g) => g.id === id)?.name || 'Unknown')
-          .join(', ');
+        const failedNames = failedGroups.map((id) => groups.find((g) => g.id === id)?.name || 'Unknown').join(', ');
         toast.warning(`Posted to ${succeededGroups.length} group(s), but failed for: ${failedNames}`);
       } else {
         toast.success('✓ Posted! Streak secured. 🔥');
@@ -395,8 +327,7 @@ const Post = () => {
       setStep('success');
     } catch (error: any) {
       console.error('Error posting:', error);
-      const message = error.message || 'Failed to post. Please try again.';
-      toast.error(message);
+      toast.error(error.message || 'Failed to post. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -409,9 +340,7 @@ const Post = () => {
       return;
     }
     setSelectedGroups((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId]
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
     );
   };
 
@@ -421,10 +350,7 @@ const Post = () => {
   if (!isEmailVerified) {
     return (
       <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
-        >
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
@@ -437,11 +363,7 @@ const Post = () => {
             You need to verify your email address before posting check-ins. Check your inbox at{' '}
             <strong>{profile?.email}</strong> for the verification link.
           </p>
-          <Button
-            onClick={handleResendVerification}
-            disabled={resending}
-            className="w-full h-12 gradient-primary font-semibold"
-          >
+          <Button onClick={handleResendVerification} disabled={resending} className="w-full h-12 gradient-primary font-semibold">
             {resending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Resend Verification Email'}
           </Button>
         </div>
@@ -462,7 +384,6 @@ const Post = () => {
       <CameraCapture
         onCapture={handleCameraCapture}
         onClose={handleCloseCamera}
-        onGallerySelect={handleGalleryFromCamera}
       />
     );
   }
@@ -475,10 +396,7 @@ const Post = () => {
         </div>
         <h1 className="text-2xl font-black text-foreground mt-6 mb-2">Streak Secured!</h1>
         <p className="text-muted-foreground text-center mb-8">Great job! Keep it up tomorrow.</p>
-        <Button
-          onClick={() => navigate('/')}
-          className="gradient-primary shadow-glow font-bold uppercase tracking-wide"
-        >
+        <Button onClick={() => navigate('/')} className="gradient-primary shadow-glow font-bold uppercase tracking-wide">
           Back to Home
         </Button>
       </div>
@@ -495,7 +413,11 @@ const Post = () => {
         <div className="space-y-4 w-full max-w-sm mb-8">
           <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
             <span className="text-2xl">📸</span>
-            <p className="text-foreground">Take or upload a photo (gym selfie, study setup, etc.)</p>
+            <p className="text-foreground">Take a photo of your habit in action (rear camera)</p>
+          </div>
+          <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+            <span className="text-2xl">🤳</span>
+            <p className="text-foreground">Take a selfie to verify it's you (front camera)</p>
           </div>
           <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
             <span className="text-2xl">✍️</span>
@@ -507,12 +429,9 @@ const Post = () => {
           </div>
         </div>
         <p className="text-muted-foreground text-center text-sm mb-6">
-          Your streak starts today. Come back tomorrow to keep it going!
+          Both photos are timestamped and must be taken within 30 seconds for verification.
         </p>
-        <Button
-          onClick={() => setShowFirstTimeGuide(false)}
-          className="w-full max-w-sm h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow"
-        >
+        <Button onClick={() => setShowFirstTimeGuide(false)} className="w-full max-w-sm h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow">
           Got it, let's post
         </Button>
       </div>
@@ -522,10 +441,7 @@ const Post = () => {
   if (availableGroups.length === 0) {
     return (
       <div className="min-h-screen bg-background px-4 py-6 safe-area-top">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
-        >
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
@@ -549,7 +465,7 @@ const Post = () => {
           onClick={() => {
             if (step === 'caption') {
               setStep('select');
-              setPhotoWithCleanup(null);
+              clearPhotos();
             } else {
               navigate(-1);
             }
@@ -569,30 +485,30 @@ const Post = () => {
           selectedGroups={selectedGroups}
           toggleGroup={toggleGroup}
           onOpenCamera={handleOpenCamera}
-          onOpenGallery={() => fileInputRef.current?.click()}
         />
       )}
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-
-      {step === 'caption' && photoPreview && (
+      {step === 'caption' && activityPreview && selfiePreview && (
         <div className="max-w-md mx-auto">
-          {/* Photo preview */}
-          <div className="relative mb-6">
-            <img
-              src={photoPreview}
-              alt="Preview"
-              className="w-full aspect-square object-cover rounded-xl"
-            />
+          {/* Photo previews */}
+          <div className="relative mb-4">
+            <div className="grid grid-cols-2 gap-2 rounded-xl overflow-hidden">
+              <div className="relative aspect-[3/4]">
+                <img src={activityPreview} alt="Activity proof" className="w-full h-full object-cover" />
+                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                  <p className="text-white text-[10px] font-semibold">📸 Activity</p>
+                </div>
+              </div>
+              <div className="relative aspect-[3/4]">
+                <img src={selfiePreview} alt="Selfie verification" className="w-full h-full object-cover" />
+                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                  <p className="text-white text-[10px] font-semibold">🤳 Selfie</p>
+                </div>
+              </div>
+            </div>
             <button
               onClick={() => {
-                setPhotoWithCleanup(null);
+                clearPhotos();
                 setStep('select');
               }}
               className="absolute top-2 right-2 p-2 bg-background/80 rounded-full"
@@ -600,6 +516,17 @@ const Post = () => {
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Timestamp badge */}
+          {captureTimestamp && (
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-muted px-3 py-1.5 rounded-full">
+                <p className="text-xs font-mono text-muted-foreground">
+                  🕐 {format(new Date(captureTimestamp), 'MMM d, yyyy • h:mm:ss a')}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Caption */}
           <div className="mb-6">
@@ -620,22 +547,13 @@ const Post = () => {
           {uploading && (
             <div className="mb-6">
               <div className="h-2 bg-input rounded-full overflow-hidden">
-                <div
-                  className="h-full gradient-primary transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
+                <div className="h-full gradient-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
               </div>
-              <p className="text-sm text-muted-foreground text-center mt-2">
-                Uploading... {uploadProgress}%
-              </p>
+              <p className="text-sm text-muted-foreground text-center mt-2">Uploading... {uploadProgress}%</p>
             </div>
           )}
 
-          <Button
-            onClick={handlePost}
-            disabled={uploading}
-            className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow"
-          >
+          <Button onClick={handlePost} disabled={uploading} className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow">
             {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Post Now'}
           </Button>
         </div>

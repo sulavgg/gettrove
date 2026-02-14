@@ -1,4 +1,4 @@
-import { Camera, Image, Moon } from 'lucide-react';
+import { Camera, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getHabitDisplay, HabitType } from '@/lib/supabase';
 import { GroupSelectionItem } from './GroupSelectionItem';
@@ -20,7 +20,6 @@ interface PostGroupSelectionProps {
   selectedGroups: string[];
   toggleGroup: (id: string) => void;
   onOpenCamera: () => void;
-  onOpenGallery: () => void;
 }
 
 export const PostGroupSelection = ({
@@ -28,7 +27,6 @@ export const PostGroupSelection = ({
   selectedGroups,
   toggleGroup,
   onOpenCamera,
-  onOpenGallery,
 }: PostGroupSelectionProps) => {
   return (
     <div className="max-w-md mx-auto">
@@ -63,16 +61,11 @@ export const PostGroupSelection = ({
             className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow gap-2"
           >
             <Camera className="w-5 h-5" />
-            Take Photo
+            Take Verification Photos
           </Button>
-          <Button
-            variant="outline"
-            onClick={onOpenGallery}
-            className="w-full h-12 gap-2"
-          >
-            <Image className="w-5 h-5" />
-            Upload from Gallery
-          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            You'll take 2 photos: activity proof + selfie verification
+          </p>
         </div>
       )}
 
