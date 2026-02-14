@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { WeeklyRecapViewer } from '@/components/recap/WeeklyRecapViewer';
 import { ContributionCalendar } from '@/components/profile/ContributionCalendar';
+import { PointsBreakdown } from '@/components/profile/PointsBreakdown';
 
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
@@ -237,6 +238,14 @@ const Profile = () => {
                       👥 {stats.groupsJoined}
                     </p>
                   </Card>
+                </div>
+
+                {/* Points Breakdown */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    Points
+                  </h3>
+                  <PointsBreakdown />
                 </div>
 
                 {/* Posting History Calendar */}
