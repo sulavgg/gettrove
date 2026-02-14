@@ -13,6 +13,8 @@ interface CheckInCardProps {
   userName: string;
   userPhoto?: string | null;
   photoUrl: string;
+  selfieUrl?: string | null;
+  captureTimestamp?: string | null;
   caption?: string | null;
   createdAt: string;
   currentStreak: number;
@@ -26,6 +28,8 @@ export const CheckInCard = ({
   userName,
   userPhoto,
   photoUrl,
+  selfieUrl,
+  captureTimestamp,
   caption,
   createdAt,
   currentStreak,
@@ -38,6 +42,7 @@ export const CheckInCard = ({
   const [localHasReacted, setLocalHasReacted] = useState(hasReacted);
   const [localReactionCount, setLocalReactionCount] = useState(reactionCount);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [selfieLoaded, setSelfieLoaded] = useState(false);
 
   const handleReaction = async () => {
     if (!user || isReacting) return;
@@ -76,6 +81,8 @@ export const CheckInCard = ({
     .toUpperCase()
     .slice(0, 2);
 
+  const hasDualPhotos = !!selfieUrl;
+
   return (
     <Card className="overflow-hidden bg-card border-border shadow-card animate-slide-up">
       {/* Header */}
@@ -98,27 +105,58 @@ export const CheckInCard = ({
         </div>
       </div>
 
-      {/* Photo */}
-      <div className="relative aspect-square bg-secondary">
-        {!imageLoaded && (
-          <div className="absolute inset-0 bg-secondary animate-pulse" />
-        )}
-        <img
-          src={photoUrl}
-          alt="Check-in proof"
-          className={cn(
-            'w-full h-full object-cover transition-opacity duration-300',
-            imageLoaded ? 'opacity-100' : 'opacity-0'
+      {/* Photos */}
+      {hasDualPhotos ? (
+        <div className="relative">
+          <div className="grid grid-cols-2 gap-0.5 bg-border">
+            <div className="relative aspect-[3/4] bg-secondary">
+              {!imageLoaded && <div className="absolute inset-0 bg-secondary animate-pulse" />}
+              <img
+                src={photoUrl}
+                alt="Activity proof"
+                className={cn('w-full h-full object-cover transition-opacity duration-300', imageLoaded ? 'opacity-100' : 'opacity-0')}
+                onLoad={() => setImageLoaded(true)}
+              />
+              <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                <p className="text-white text-[10px] font-semibold">📸 Activity</p>
+              </div>
+            </div>
+            <div className="relative aspect-[3/4] bg-secondary">
+              {!selfieLoaded && <div className="absolute inset-0 bg-secondary animate-pulse" />}
+              <img
+                src={selfieUrl}
+                alt="Selfie verification"
+                className={cn('w-full h-full object-cover transition-opacity duration-300', selfieLoaded ? 'opacity-100' : 'opacity-0')}
+                onLoad={() => setSelfieLoaded(true)}
+              />
+              <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                <p className="text-white text-[10px] font-semibold">🤳 Selfie</p>
+              </div>
+            </div>
+          </div>
+          {captureTimestamp && (
+            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+              <p className="text-white text-[10px] font-mono">
+                🕐 {format(new Date(captureTimestamp), 'h:mm:ss a')}
+              </p>
+            </div>
           )}
-          onLoad={() => setImageLoaded(true)}
-        />
-      </div>
+        </div>
+      ) : (
+        <div className="relative aspect-square bg-secondary">
+          {!imageLoaded && <div className="absolute inset-0 bg-secondary animate-pulse" />}
+          <img
+            src={photoUrl}
+            alt="Check-in proof"
+            className={cn('w-full h-full object-cover transition-opacity duration-300', imageLoaded ? 'opacity-100' : 'opacity-0')}
+            onLoad={() => setImageLoaded(true)}
+          />
+        </div>
+      )}
 
       {/* Caption & Actions */}
       <div className="p-4">
-        {caption && (
-          <p className="text-foreground mb-3">{caption}</p>
-        )}
+        {caption && <p className="text-foreground mb-3">{caption}</p>}
 
         <div className="flex items-center justify-between">
           <Button
@@ -126,10 +164,7 @@ export const CheckInCard = ({
             size="sm"
             onClick={handleReaction}
             disabled={isReacting}
-            className={cn(
-              'gap-2 transition-all duration-200',
-              localHasReacted && 'text-primary'
-            )}
+            className={cn('gap-2 transition-all duration-200', localHasReacted && 'text-primary')}
           >
             <span className={cn('text-xl', localHasReacted && 'animate-scale-in')}>💪</span>
             <span className="font-semibold">{localReactionCount}</span>

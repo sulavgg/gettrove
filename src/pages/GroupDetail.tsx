@@ -41,6 +41,8 @@ interface Member {
   checkin?: {
     id: string;
     photo_url: string;
+    selfie_url: string | null;
+    capture_timestamp: string | null;
     caption: string | null;
     created_at: string;
     reaction_count: number;
@@ -174,6 +176,8 @@ const GroupDetail = () => {
             ? {
                 id: checkin.id,
                 photo_url: checkin.photo_url,
+                selfie_url: (checkin as any).selfie_url || null,
+                capture_timestamp: (checkin as any).capture_timestamp || null,
                 caption: checkin.caption,
                 created_at: checkin.created_at,
                 reaction_count: reactionData.length,
@@ -332,6 +336,8 @@ const GroupDetail = () => {
                                     userName={member.name}
                                     userPhoto={member.photo}
                                     photoUrl={member.checkin!.photo_url}
+                                    selfieUrl={member.checkin!.selfie_url}
+                                    captureTimestamp={member.checkin!.capture_timestamp}
                                     caption={member.checkin!.caption}
                                     createdAt={member.checkin!.created_at}
                                     currentStreak={member.current_streak}
