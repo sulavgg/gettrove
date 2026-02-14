@@ -11,6 +11,7 @@ import { GroupLockedDialog } from '@/components/GroupLockedDialog';
 import { PostGroupSelection } from '@/components/post/PostGroupSelection';
 import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 import { format } from 'date-fns';
+import { calculatePostPoints, type PointBreakdown } from '@/lib/points';
 
 interface GroupOption {
   id: string;
@@ -29,6 +30,7 @@ const Post = () => {
   const { user, profile, updateProfile, isEmailVerified, resendVerificationEmail } = useAuth();
 
   const [step, setStep] = useState<'select' | 'camera' | 'caption' | 'success'>('select');
+  const [earnedPoints, setEarnedPoints] = useState<PointBreakdown | null>(null);
   const [groups, setGroups] = useState<GroupOption[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [activityPhoto, setActivityPhoto] = useState<File | null>(null);
@@ -297,6 +299,43 @@ const Post = () => {
 
         if (streakError) console.warn('Streak update warning:', streakError);
 
+        // Award posting points
+        try {
+          const { data: streakData } = await supabase
+            .from('streaks')
+            .select('current_streak')
+            .eq('user_id', user.id)
+            .eq('group_id', groupId)
+            .single();
+
+          const currentStreak = streakData?.current_streak || 0;
+          const postDate = captureTimestamp ? new Date(captureTimestamp) : new Date();
+          const breakdown = calculatePostPoints(postDate, currentStreak);
+
+          const txns: any[] = [
+            { user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: 'post_base', points: breakdown.base, description: 'Base posting points' },
+            ...breakdown.bonuses.map(b => ({
+              user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: b.key, points: b.points, description: b.label,
+            })),
+          ];
+
+          if (breakdown.multiplierBonus > 0) {
+            txns.push({ user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: 'streak_multiplier', points: breakdown.multiplierBonus, description: `🔥 Streak ×${breakdown.multiplier} bonus` });
+          }
+          if (breakdown.streakMilestone > 0) {
+            txns.push({ user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: 'streak_milestone', points: breakdown.streakMilestone, description: `🏆 ${currentStreak}-day streak milestone!` });
+          }
+          if (breakdown.perfectBonus > 0) {
+            const desc = currentStreak === 30 ? '🌟 Perfect Month!' : `⭐ Perfect Week (${currentStreak} days)!`;
+            txns.push({ user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: currentStreak === 30 ? 'perfect_month' : 'perfect_week', points: breakdown.perfectBonus, description: desc });
+          }
+
+          await (supabase as any).from('point_transactions').insert(txns);
+          setEarnedPoints(breakdown);
+        } catch (ptErr) {
+          console.warn('Points calculation error:', ptErr);
+        }
+
         if (checkinData?.id) {
           supabase.functions.invoke('verify-challenge-post', {
             body: { checkin_id: checkinData.id, group_id: groupId, photo_url: activityUrl },
@@ -395,6 +434,46 @@ const Post = () => {
           <span className="text-7xl">🔥</span>
         </div>
         <h1 className="text-2xl font-black text-foreground mt-6 mb-2">Streak Secured!</h1>
+        
+        {/* Points earned display */}
+        {earnedPoints && (
+          <div className="w-full max-w-xs bg-card rounded-xl border border-border p-4 mb-4">
+            <div className="text-center mb-3">
+              <p className="text-3xl font-black text-primary">+{earnedPoints.total} pts</p>
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>📝 Base</span>
+                <span>{earnedPoints.base} pts</span>
+              </div>
+              {earnedPoints.bonuses.map((b, i) => (
+                <div key={i} className="flex justify-between text-muted-foreground">
+                  <span>{b.label}</span>
+                  <span className="text-primary">+{b.points} pts</span>
+                </div>
+              ))}
+              {earnedPoints.multiplierBonus > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>🔥 Streak ×{earnedPoints.multiplier}</span>
+                  <span className="text-primary">+{earnedPoints.multiplierBonus} pts</span>
+                </div>
+              )}
+              {earnedPoints.streakMilestone > 0 && (
+                <div className="flex justify-between text-warning font-semibold">
+                  <span>🏆 Streak Milestone!</span>
+                  <span>+{earnedPoints.streakMilestone} pts</span>
+                </div>
+              )}
+              {earnedPoints.perfectBonus > 0 && (
+                <div className="flex justify-between text-success font-semibold">
+                  <span>⭐ Perfect Bonus!</span>
+                  <span>+{earnedPoints.perfectBonus} pts</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <p className="text-muted-foreground text-center mb-8">Great job! Keep it up tomorrow.</p>
         <Button onClick={() => navigate('/')} className="gradient-primary shadow-glow font-bold uppercase tracking-wide">
           Back to Home

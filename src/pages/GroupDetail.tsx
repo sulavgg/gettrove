@@ -47,6 +47,7 @@ interface Member {
     created_at: string;
     reaction_count: number;
     has_reacted: boolean;
+    points?: { point_type: string; points: number; description: string | null }[];
   };
 }
 
@@ -159,6 +160,22 @@ const GroupDetail = () => {
         .select('user_id, current_streak')
         .eq('group_id', groupData.id);
 
+      // Get point transactions for today's checkins
+      let pointsMap = new Map<string, { point_type: string; points: number; description: string | null }[]>();
+      if (checkinIds.length > 0) {
+        const { data: pointsTxns } = await (supabase as any)
+          .from('point_transactions')
+          .select('checkin_id, point_type, points, description')
+          .in('checkin_id', checkinIds) as { data: { checkin_id: string; point_type: string; points: number; description: string | null }[] | null };
+
+        if (pointsTxns) {
+          for (const txn of pointsTxns) {
+            if (!pointsMap.has(txn.checkin_id)) pointsMap.set(txn.checkin_id, []);
+            pointsMap.get(txn.checkin_id)!.push({ point_type: txn.point_type, points: txn.points, description: txn.description });
+          }
+        }
+      }
+
       // Build member data
       const enrichedMembers: Member[] = (profiles || []).map((profile) => {
         const checkin = checkins?.find((c) => c.user_id === profile.user_id);
@@ -182,6 +199,7 @@ const GroupDetail = () => {
                 created_at: checkin.created_at,
                 reaction_count: reactionData.length,
                 has_reacted: reactionData.some((r) => r.user_id === user.id),
+                points: pointsMap.get(checkin.id) || [],
               }
             : undefined,
         };
@@ -344,6 +362,7 @@ const GroupDetail = () => {
                                     reactionCount={member.checkin!.reaction_count}
                                     hasReacted={member.checkin!.has_reacted}
                                     onReactionChange={fetchGroupData}
+                                    pointsData={member.checkin!.points}
                                   />
                                 </StaggeredItem>
                               ))}

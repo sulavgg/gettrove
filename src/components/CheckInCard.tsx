@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VoiceRepliesSection } from '@/components/voice/VoiceRepliesSection';
+import { PointsBadge } from '@/components/PointsBadge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ interface CheckInCardProps {
   reactionCount: number;
   hasReacted: boolean;
   onReactionChange: () => void;
+  pointsData?: { point_type: string; points: number; description: string | null }[];
 }
 
 export const CheckInCard = ({
@@ -36,6 +38,7 @@ export const CheckInCard = ({
   reactionCount,
   hasReacted,
   onReactionChange,
+  pointsData,
 }: CheckInCardProps) => {
   const { user } = useAuth();
   const [isReacting, setIsReacting] = useState(false);
@@ -99,9 +102,14 @@ export const CheckInCard = ({
             Posted at {format(new Date(createdAt), 'h:mm a')}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/10">
-          <span className="text-sm animate-pulse-fire">🔥</span>
-          <span className="text-sm font-bold text-warning">{currentStreak}-day streak</span>
+        <div className="flex items-center gap-2">
+          {pointsData && pointsData.length > 0 && (
+            <PointsBadge transactions={pointsData} />
+          )}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/10">
+            <span className="text-sm animate-pulse-fire">🔥</span>
+            <span className="text-sm font-bold text-warning">{currentStreak}</span>
+          </div>
         </div>
       </div>
 
