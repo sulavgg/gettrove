@@ -4,6 +4,7 @@ import { Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { validateEmail, validatePassword, validateName } from '@/lib/validation';
 
@@ -45,7 +46,17 @@ const Auth = () => {
       if (mode === 'signup') {
         const { error } = await signUp(email.trim(), password, name.trim());
         if (error) { toast.error(error.message); }
-        else { toast.success('Check your email to confirm your account!'); }
+        else {
+          // Send branded verification email via Resend
+          try {
+            await supabase.functions.invoke('send-verification-email', {
+              body: { email: email.trim(), redirectTo: window.location.origin },
+            });
+          } catch (e) {
+            console.warn('Custom verification email failed, falling back to default:', e);
+          }
+          toast.success('Check your email to confirm your account!');
+        }
       } else {
         const { error } = await signIn(email.trim(), password);
         if (error) {
