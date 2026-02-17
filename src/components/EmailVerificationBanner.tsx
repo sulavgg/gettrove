@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, Mail, X, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface EmailVerificationBannerProps {
@@ -16,20 +16,27 @@ export const EmailVerificationBanner = ({ email, onDismiss }: EmailVerificationB
   const handleResendVerification = async () => {
     setSending(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
+      // Try custom Resend-powered email first
+      const { error: fnError } = await supabase.functions.invoke('send-verification-email', {
+        body: { email, redirectTo: window.location.origin },
       });
 
-      if (error) {
-        toast.error(error.message);
-      } else {
-        setSent(true);
-        toast.success('Verification email sent! Check your inbox.');
+      if (fnError) {
+        console.warn('Custom resend failed, falling back to default:', fnError);
+        // Fallback to built-in resend
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
       }
+
+      setSent(true);
+      toast.success('Verification email sent! Check your inbox.');
     } catch (error) {
       toast.error('Failed to send verification email');
     } finally {
