@@ -17,6 +17,7 @@ import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
 import { WeeklyRecapSlides } from '@/components/recap/WeeklyRecapSlides';
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
+import { getSignedPhotoUrls } from '@/lib/storage';
 
 // New home components
 import { StatsCard } from '@/components/home/StatsCard';
@@ -349,6 +350,10 @@ const Home = () => {
         }
       }
 
+      // Generate fresh signed URLs for activity photos
+      const photoUrls = checkins.map(c => c.photo_url);
+      const signedUrlMap = await getSignedPhotoUrls(photoUrls);
+
       const activities: ActivityItem[] = checkins.map(checkin => ({
         id: checkin.id,
         userId: checkin.user_id,
@@ -356,7 +361,7 @@ const Home = () => {
         userAvatar: profiles[checkin.user_id]?.profile_photo_url,
         groupId: checkin.group_id,
         groupName: groupMap.get(checkin.group_id) || 'Unknown Group',
-        photoUrl: checkin.photo_url,
+        photoUrl: signedUrlMap.get(checkin.photo_url) || checkin.photo_url,
         caption: checkin.caption,
         createdAt: checkin.created_at,
       }));
