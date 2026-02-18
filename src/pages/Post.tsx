@@ -248,12 +248,9 @@ const Post = () => {
 
     if (uploadError) throw new Error('Failed to upload photo.');
 
-    const { data, error: urlError } = await supabase.storage
-      .from('checkin-photos')
-      .createSignedUrl(fileName, 3600 * 24 * 365);
-
-    if (urlError || !data?.signedUrl) throw new Error('Failed to generate image URL.');
-    return data.signedUrl;
+    // Return the storage path, not a signed URL
+    // Signed URLs expire — store the path and generate URLs on-the-fly when displaying
+    return fileName;
   };
 
   const handlePost = async () => {

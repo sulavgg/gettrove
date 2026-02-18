@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Settings, MessageCircle, Moon, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +22,7 @@ import { supabase, getHabitDisplay, HabitType } from '@/lib/supabase';
 import { triggerHaptic } from '@/hooks/useHaptic';
 import { useGroupUnlock } from '@/hooks/useGroupUnlock';
 import { useWeeklyChallenge } from '@/hooks/useWeeklyChallenge';
+import { getSignedPhotoUrls } from '@/lib/storage';
 
 interface GroupInfo {
   id: string;
@@ -137,6 +138,18 @@ const GroupDetail = () => {
         .gte('created_at', todayISO)
         .order('created_at', { ascending: false });
 
+      // Generate fresh signed URLs for all checkin photos
+      const allPhotoUrls: string[] = [];
+      if (checkins) {
+        for (const c of checkins) {
+          allPhotoUrls.push(c.photo_url);
+          if (c.selfie_url) allPhotoUrls.push(c.selfie_url);
+        }
+      }
+      const signedUrlMap = allPhotoUrls.length > 0
+        ? await getSignedPhotoUrls(allPhotoUrls)
+        : new Map<string, string>();
+
       // Get today's rest days
       const todayDate = today.toISOString().split('T')[0];
       const { data: restDays } = await supabase
@@ -192,8 +205,8 @@ const GroupDetail = () => {
           checkin: checkin
             ? {
                 id: checkin.id,
-                photo_url: checkin.photo_url,
-                selfie_url: (checkin as any).selfie_url || null,
+                photo_url: signedUrlMap.get(checkin.photo_url) || checkin.photo_url,
+                selfie_url: checkin.selfie_url ? (signedUrlMap.get(checkin.selfie_url) || checkin.selfie_url) : null,
                 capture_timestamp: (checkin as any).capture_timestamp || null,
                 caption: checkin.caption,
                 created_at: checkin.created_at,
