@@ -20,9 +20,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
 
-    // Generate a signup confirmation link using Supabase Admin API
-    // Try signup type first, fallback to magiclink for existing unconfirmed users
-    let linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
+    // Generate a magic link to confirm the user's email
+    // The user already exists from signUp, so magiclink type works and confirms email on click
+    const linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
         apikey: SUPABASE_SERVICE_ROLE_KEY,
       },
       body: JSON.stringify({
-        type: "signup",
+        type: "magiclink",
         email,
         options: {
           redirect_to: redirectTo || SUPABASE_URL,
@@ -38,27 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
-    let linkData = await linkRes.json();
-
-    // If user already exists, try magiclink type instead
-    if (!linkRes.ok && linkData.msg?.includes("already been registered")) {
-      linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-        },
-        body: JSON.stringify({
-          type: "magiclink",
-          email,
-          options: {
-            redirect_to: redirectTo || SUPABASE_URL,
-          },
-        }),
-      });
-      linkData = await linkRes.json();
-    }
+    const linkData = await linkRes.json();
 
     if (!linkRes.ok) {
       console.error("Generate link error:", linkData);
