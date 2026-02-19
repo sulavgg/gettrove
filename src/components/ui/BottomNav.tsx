@@ -34,7 +34,8 @@ export const BottomNav = () => {
                 className={cn(
                   'w-6 h-6 transition-transform duration-200',
                   isActive && 'scale-110'
-                )} 
+                )}
+                strokeWidth={isActive ? 2 : 1.5}
               />
               <span className="text-xs font-medium uppercase tracking-wide">
                 {item.label}

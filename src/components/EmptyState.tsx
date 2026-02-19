@@ -46,13 +46,13 @@ export const EmptyState = ({
         <div className="flex flex-col gap-3 w-full max-w-xs">
           {actionLabel && (
             actionHref ? (
-              <Button asChild className="gradient-primary shadow-glow font-bold uppercase tracking-wide">
+              <Button asChild className="bg-primary text-primary-foreground shadow-glow font-bold uppercase tracking-wide hover:bg-primary/90">
                 <a href={actionHref}>{actionLabel}</a>
               </Button>
             ) : (
               <Button 
                 onClick={onAction} 
-                className="gradient-primary shadow-glow font-bold uppercase tracking-wide"
+                className="bg-primary text-primary-foreground shadow-glow font-bold uppercase tracking-wide hover:bg-primary/90"
               >
                 {actionLabel}
               </Button>

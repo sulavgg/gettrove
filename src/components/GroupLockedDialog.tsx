@@ -97,7 +97,7 @@ export const GroupLockedDialog = ({
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy Link'}
           </Button>
-          <Button onClick={handleShare} className="gap-2 gradient-primary">
+          <Button onClick={handleShare} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             <Share2 className="w-4 h-4" />
             Share
           </Button>

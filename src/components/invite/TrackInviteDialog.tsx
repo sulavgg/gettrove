@@ -81,7 +81,7 @@ export const TrackInviteDialog = ({
             <Button
               type="submit"
               disabled={!name.trim() || saving}
-              className="flex-1 gradient-primary"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Track Invite
             </Button>

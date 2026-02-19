@@ -214,7 +214,7 @@ const GroupSettings = () => {
             </Button>
             <Button
               onClick={handleShare}
-              className="gap-2 gradient-primary"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Share2 className="w-4 h-4" />
               Share

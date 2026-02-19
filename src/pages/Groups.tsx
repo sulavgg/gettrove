@@ -110,7 +110,7 @@ const Groups = () => {
           <Button
             asChild
             size="sm"
-            className="gap-2 gradient-primary shadow-glow"
+            className="gap-2 bg-primary text-primary-foreground shadow-glow hover:bg-primary/90"
             onClick={() => triggerHaptic('light')}
           >
             <Link to="/create-group">

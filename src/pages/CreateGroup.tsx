@@ -44,13 +44,13 @@ const CreateGroup = () => {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
           <span>Back</span>
         </button>
 
         <div className="max-w-md mx-auto text-center">
           <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-warning" />
+            <AlertTriangle className="w-8 h-8 text-warning" strokeWidth={1.5} />
           </div>
           <h1 className="text-2xl font-black text-foreground mb-2">Verify Your Email</h1>
           <p className="text-muted-foreground mb-6">
@@ -60,7 +60,7 @@ const CreateGroup = () => {
           <Button
             onClick={handleResendVerification}
             disabled={resending}
-            className="w-full h-12 gradient-primary font-semibold"
+            className="w-full h-12 bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
           >
             {resending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Resend Verification Email"}
           </Button>
@@ -160,10 +160,10 @@ const CreateGroup = () => {
           </div>
 
           {/* Member progress */}
-          <Card className="p-5 bg-card border-warning/30 mb-6 space-y-3">
+           <Card className="p-5 bg-card border-warning/30 mb-6 space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-warning" />
+                <Users className="w-5 h-5 text-warning" strokeWidth={1.5} />
               </div>
               <div>
                 <p className="font-bold text-foreground">Posting is locked</p>
@@ -181,28 +181,28 @@ const CreateGroup = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-card border-border mb-6">
+          <Card className="p-6 bg-card border border-white/[0.08] mb-6">
             <h2 className="font-bold text-foreground mb-4">{name}</h2>
 
             <div className="p-4 bg-input rounded-lg mb-4 break-all text-sm text-muted-foreground">{inviteLink}</div>
 
             <div className="grid grid-cols-2 gap-3">
               <Button onClick={handleCopy} variant="outline" className="gap-2">
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4" strokeWidth={1.5} /> : <Copy className="w-4 h-4" strokeWidth={1.5} />}
                 {copied ? "Copied!" : "Copy Link"}
               </Button>
-              <Button onClick={handleShare} className="gap-2 gradient-primary">
-                <Share2 className="w-4 h-4" />
+              <Button onClick={handleShare} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                <Share2 className="w-4 h-4" strokeWidth={1.5} />
                 Share
               </Button>
             </div>
           </Card>
 
           <div className="space-y-3">
-            <Button
-              onClick={() => navigate(`/group/${groupId}`)}
-              className="w-full h-12 gradient-primary font-bold uppercase tracking-wide shadow-glow"
-            >
+              <Button
+                onClick={() => navigate(`/group/${groupId}`)}
+                className="w-full h-12 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90"
+              >
               Go to Group
             </Button>
             <Button onClick={() => navigate("/")} variant="ghost" className="w-full">
@@ -221,7 +221,7 @@ const CreateGroup = () => {
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
       >
-        <ArrowLeft className="w-5 h-5" />
+        <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         <span>Back</span>
       </button>
 
@@ -279,7 +279,7 @@ const CreateGroup = () => {
 
           <Button
             type="submit"
-            className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow"
+            className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90"
             disabled={loading || !name.trim() || !habitType}
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Group"}

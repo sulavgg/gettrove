@@ -240,7 +240,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
             <Button variant="outline" onClick={handleActivityRetake} className="flex-1 h-14 text-lg font-semibold">
               Retake
             </Button>
-            <Button onClick={handleActivityConfirm} className="flex-1 h-14 text-lg font-semibold gradient-primary shadow-glow">
+            <Button onClick={handleActivityConfirm} className="flex-1 h-14 text-lg font-semibold bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
               Next: Selfie →
             </Button>
           </div>
@@ -278,7 +278,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
             <Button variant="outline" onClick={handleSelfieRetake} className="flex-1 h-14 text-lg font-semibold">
               Retake Selfie
             </Button>
-            <Button onClick={handleFinalConfirm} className="flex-1 h-14 text-lg font-semibold gradient-primary shadow-glow">
+            <Button onClick={handleFinalConfirm} className="flex-1 h-14 text-lg font-semibold bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
               Use Photos ✓
             </Button>
           </div>

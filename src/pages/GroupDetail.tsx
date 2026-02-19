@@ -263,7 +263,7 @@ const GroupDetail = () => {
             }}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
           </button>
 
           <div className="text-center">
@@ -282,14 +282,14 @@ const GroupDetail = () => {
               className="p-2 text-muted-foreground hover:text-foreground"
               onClick={() => triggerHaptic('light')}
             >
-              <MessageCircle className="w-5 h-5" />
+              <MessageCircle className="w-5 h-5" strokeWidth={1.5} />
             </Link>
             <Link
               to={`/group/${group?.id}/settings`}
               className="p-2 text-muted-foreground hover:text-foreground"
               onClick={() => triggerHaptic('light')}
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-5 h-5" strokeWidth={1.5} />
             </Link>
           </div>
         </div>
@@ -306,11 +306,11 @@ const GroupDetail = () => {
               />
             ) : (
               <Tabs value={tab} onValueChange={setTab}>
-                <TabsList className="w-full mb-6 bg-card">
+                <TabsList className="w-full mb-6 bg-muted/30">
                   <TabsTrigger value="feed" className="flex-1" onClick={() => triggerHaptic('light')}>Feed</TabsTrigger>
                   <TabsTrigger value="leaderboard" className="flex-1" onClick={() => triggerHaptic('light')}>Leaderboard</TabsTrigger>
                   <TabsTrigger value="invite" className="flex-1" onClick={() => triggerHaptic('light')}>
-                    <UserPlus className="w-3.5 h-3.5 mr-1" />
+                    <UserPlus className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
                     Invite
                   </TabsTrigger>
                 </TabsList>
@@ -387,7 +387,7 @@ const GroupDetail = () => {
                       {members.filter((m) => m.rested_today && !m.posted_today).length > 0 && (
                         <div>
                           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                            <Moon className="w-4 h-4" /> Resting Today
+                            <Moon className="w-4 h-4" strokeWidth={1.5} /> Resting Today
                           </h2>
                           <div className="space-y-2">
                             {members
@@ -395,7 +395,7 @@ const GroupDetail = () => {
                               .map((member) => (
                                 <div
                                   key={member.user_id}
-                                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
+                                 className="flex items-center gap-3 p-3 bg-card rounded-xl border border-white/[0.08]"
                                 >
                                   <Avatar className="w-10 h-10">
                                     <AvatarImage src={member.photo || undefined} />
@@ -427,7 +427,7 @@ const GroupDetail = () => {
                               .map((member) => (
                                 <div
                                   key={member.user_id}
-                                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border"
+                                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-white/[0.08]"
                                 >
                                   <Avatar className="w-10 h-10">
                                     <AvatarImage src={member.photo || undefined} />

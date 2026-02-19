@@ -88,7 +88,7 @@
     --popover: 220 40% 9%;
     --popover-foreground: 40 20% 93%;
 
-    --primary: 43 74% 52%;
+    --primary: 43 85% 55%;
     --primary-foreground: 220 58% 8%;
 
     --secondary: 220 30% 14%;
@@ -97,7 +97,7 @@
     --muted: 220 25% 14%;
     --muted-foreground: 220 15% 55%;
 
-    --accent: 43 74% 52%;
+    --accent: 43 85% 55%;
     --accent-foreground: 220 58% 8%;
 
     --destructive: 0 84% 60%;
@@ -109,7 +109,7 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --gold: 43 74% 52%;
+    --gold: 43 85% 55%;
     --gold-foreground: 220 58% 8%;
 
     --bronze: 30 47% 50%;
@@ -117,21 +117,21 @@
 
     --border: 220 20% 18%;
     --input: 220 25% 12%;
-    --ring: 43 74% 52%;
+    --ring: 43 85% 55%;
 
     --sidebar-background: 220 40% 6%;
     --sidebar-foreground: 40 20% 93%;
-    --sidebar-primary: 43 74% 52%;
+    --sidebar-primary: 43 85% 55%;
     --sidebar-primary-foreground: 220 58% 8%;
     --sidebar-accent: 220 25% 14%;
     --sidebar-accent-foreground: 40 20% 93%;
     --sidebar-border: 220 20% 18%;
-    --sidebar-ring: 43 74% 52%;
+    --sidebar-ring: 43 85% 55%;
 
     /* Trove gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(30 47% 50%) 50%, hsl(220 40% 25%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(35 60% 45%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(30 47% 50%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(43 85% 55%) 0%, hsl(30 55% 48%) 50%, hsl(220 40% 25%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(43 85% 55%) 0%, hsl(35 70% 48%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 85% 55%) 0%, hsl(30 55% 48%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(145 63% 42%) 0%, hsl(160 60% 38%) 100%);
     --gradient-glass: linear-gradient(135deg, hsl(220 30% 12% / 0.7) 0%, hsl(220 25% 8% / 0.5) 100%);
 
@@ -140,10 +140,10 @@
     --cal-level-1: 220 30% 30%;
     --cal-level-2: 220 40% 45%;
     --cal-level-3: 43 60% 50%;
-    --cal-streak-gold: 43 74% 52%;
+    --cal-streak-gold: 43 85% 55%;
 
     /* Shadows */
-    --shadow-glow: 0 0 30px hsl(43 74% 52% / 0.3);
+    --shadow-glow: 0 0 30px hsl(43 85% 55% / 0.3);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 20px 40px hsl(0 0% 0% / 0.6);
   }
@@ -234,7 +234,7 @@
     background: hsl(var(--card) / 0.7);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border));
+    border: 1px solid hsl(0 0% 100% / 0.08);
   }
 
   /* Animated border gradient */
@@ -281,10 +281,10 @@
 
   @keyframes glow-pulse {
     0%, 100% {
-      box-shadow: 0 0 20px hsl(43 74% 52% / 0.2);
+      box-shadow: 0 0 20px hsl(43 85% 55% / 0.2);
     }
     50% {
-      box-shadow: 0 0 40px hsl(43 74% 52% / 0.4);
+      box-shadow: 0 0 40px hsl(43 85% 55% / 0.4);
     }
   }
 

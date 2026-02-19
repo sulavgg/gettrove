@@ -312,7 +312,7 @@ const GroupChat = () => {
             size="icon"
             className={cn(
               'h-11 w-11 flex-shrink-0',
-              newMessage.trim() ? 'gradient-primary' : 'bg-muted'
+              newMessage.trim() ? 'bg-primary text-primary-foreground' : 'bg-muted'
             )}
           >
             {sending ? (

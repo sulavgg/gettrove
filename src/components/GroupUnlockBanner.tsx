@@ -59,7 +59,7 @@ export const GroupUnlockBanner = ({
     <Card className="p-5 border-warning/30 bg-warning/5 space-y-4">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
-          <Lock className="w-5 h-5 text-warning" />
+          <Lock className="w-5 h-5 text-warning" strokeWidth={1.5} />
         </div>
         <div>
           <h3 className="font-bold text-foreground">Posting Locked</h3>
@@ -73,7 +73,7 @@ export const GroupUnlockBanner = ({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
             Members
           </span>
           <span className="font-bold text-foreground">
@@ -108,11 +108,11 @@ export const GroupUnlockBanner = ({
       {/* Share actions */}
       <div className="grid grid-cols-2 gap-2">
         <Button onClick={handleCopy} variant="outline" size="sm" className="gap-1.5">
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? <Check className="w-3.5 h-3.5" strokeWidth={1.5} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
           {copied ? 'Copied!' : 'Copy Link'}
         </Button>
-        <Button onClick={handleShare} size="sm" className="gap-1.5 gradient-primary">
-          <Share2 className="w-3.5 h-3.5" />
+        <Button onClick={handleShare} size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90">
+          <Share2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           Share Invite
         </Button>
       </div>

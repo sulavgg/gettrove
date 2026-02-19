@@ -37,7 +37,7 @@ export const StatsCard = ({
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Your Performance
           </h2>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
         </div>
 
         {/* Stats Grid */}
@@ -56,7 +56,7 @@ export const StatsCard = ({
           {/* Posted Today */}
           <div className="text-center border-x border-border/50">
             <div className="flex items-center justify-center gap-1.5 mb-1">
-              <CheckCircle2 className="w-5 h-5 text-success" />
+              <CheckCircle2 className="w-5 h-5 text-success" strokeWidth={1.5} />
               <span className="text-3xl font-black text-foreground">
                 {postedToday}
                 <span className="text-lg text-muted-foreground">/{totalGroups}</span>
@@ -70,7 +70,7 @@ export const StatsCard = ({
           {/* Longest Streak */}
           <div className="text-center">
             <div className="flex items-center justify-center gap-1.5 mb-1">
-              <TrendingUp className="w-5 h-5 text-warning" />
+              <TrendingUp className="w-5 h-5 text-warning" strokeWidth={1.5} />
               <span className="text-3xl font-black text-foreground">{longestStreak}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-tight">

@@ -58,7 +58,7 @@ export const PostGroupSelection = ({
         <div className="space-y-3">
           <Button
             onClick={onOpenCamera}
-            className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow gap-2"
+            className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow gap-2 hover:bg-primary/90"
           >
             <Camera className="w-5 h-5" />
             Take Verification Photos
