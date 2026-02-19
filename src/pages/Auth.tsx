@@ -83,22 +83,19 @@ const Auth = () => {
         <h1 className="text-5xl font-heading font-black tracking-tight mb-3">
           <span className="text-foreground">TROVE</span>
         </h1>
-        <p className="text-muted-foreground text-lg">
-          Build Your Treasure
-        </p>
-        <p className="text-muted-foreground/60 text-sm mt-1 italic">
+        <p className="text-muted-foreground/60 text-sm italic">
           Consistency is Currency
         </p>
       </div>
 
       <div className="w-full max-w-sm animate-slide-up" style={{ animationDelay: '0.1s' }}>
-        <div className="glass-card rounded-2xl p-6 shadow-elevated">
+        <div className="rounded-2xl p-6 bg-card/70 backdrop-blur-xl border border-white/[0.08] shadow-elevated">
           {/* Tabs */}
-          <div className="flex gap-1 mb-6 p-1 bg-muted/50 rounded-xl">
+          <div className="flex gap-1 mb-6 p-1 bg-muted/30 rounded-xl">
             <button
               type="button"
               className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
-                mode === 'login' ? 'bg-card text-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'
+                mode === 'login' ? 'bg-[#F0B429] text-[#1A1A1A] shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
               }`}
               onClick={() => setMode('login')}
             >
@@ -107,7 +104,7 @@ const Auth = () => {
             <button
               type="button"
               className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
-                mode === 'signup' ? 'bg-card text-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'
+                mode === 'signup' ? 'bg-[#F0B429] text-[#1A1A1A] shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
               }`}
               onClick={() => setMode('signup')}
             >
@@ -119,7 +116,7 @@ const Auth = () => {
             {mode === 'signup' && (
               <div className="space-y-1">
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60 transition-colors group-focus-within:text-primary" strokeWidth={1.5} />
                   <Input
                     type="text"
                     placeholder="Your name"
@@ -142,7 +139,7 @@ const Auth = () => {
 
             <div className="space-y-1">
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60 transition-colors group-focus-within:text-primary" strokeWidth={1.5} />
                 <Input
                   type="email"
                   placeholder="Email address"
@@ -164,7 +161,7 @@ const Auth = () => {
 
             <div className="space-y-1">
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60 transition-colors group-focus-within:text-primary" strokeWidth={1.5} />
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
@@ -178,9 +175,9 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" strokeWidth={1.5} /> : <Eye className="w-5 h-5" strokeWidth={1.5} />}
                 </button>
               </div>
               {touched.password && !passwordValidation.valid && (
@@ -193,7 +190,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full h-14 gradient-primary font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full h-14 bg-[#F0B429] hover:bg-[#E0A520] text-[#1A1A1A] font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               disabled={loading || !isFormValid}
             >
               {loading ? (
