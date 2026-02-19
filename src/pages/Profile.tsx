@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, Sun, Moon } from 'lucide-react';
+import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, Sun, Moon, Globe, EyeOff, School } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
@@ -20,6 +20,7 @@ import { PointsBreakdown } from '@/components/profile/PointsBreakdown';
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
 import { useTheme } from '@/contexts/ThemeContext';
+import { CampusSetupDialog } from '@/components/campus/CampusSetupDialog';
 
 interface UserStats {
   activeStreaks: number;
@@ -30,8 +31,9 @@ interface UserStats {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut, isEmailVerified, resendVerificationEmail } = useAuth();
+  const { user, profile, signOut, updateProfile, isEmailVerified, resendVerificationEmail } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [showCampusDialog, setShowCampusDialog] = useState(false);
   const [stats, setStats] = useState<UserStats>({
     activeStreaks: 0,
     totalCheckins: 0,
@@ -294,6 +296,79 @@ const Profile = () => {
                 </div>
 
 
+                {/* Campus Settings */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    Campus Community
+                  </h3>
+                  <Card className="p-4 bg-card border border-white/[0.08] space-y-4">
+                    {/* Campus selection */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <School className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                        <div>
+                          <p className="font-medium text-foreground">Campus</p>
+                          <p className="text-xs text-muted-foreground">
+                            {profile?.campus || 'Not set'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowCampusDialog(true)}
+                      >
+                        {profile?.campus ? 'Change' : 'Set'}
+                      </Button>
+                    </div>
+
+                    {/* Show on campus feed toggle */}
+                    {profile?.campus && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Globe className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                            <div>
+                              <p className="font-medium text-foreground">Show on Campus Feed</p>
+                              <p className="text-xs text-muted-foreground">
+                                Your posts appear in the campus feed
+                              </p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={profile?.show_on_campus_feed ?? true}
+                            onCheckedChange={async (checked) => {
+                              triggerHaptic('light');
+                              await updateProfile({ show_on_campus_feed: checked } as any);
+                              toast.success(checked ? 'Visible on campus feed' : 'Hidden from campus feed');
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <EyeOff className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                            <div>
+                              <p className="font-medium text-foreground">Anonymous Mode</p>
+                              <p className="text-xs text-muted-foreground">
+                                Show as "Anonymous" on campus feed
+                              </p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={profile?.anonymous_on_campus ?? false}
+                            onCheckedChange={async (checked) => {
+                              triggerHaptic('light');
+                              await updateProfile({ anonymous_on_campus: checked } as any);
+                              toast.success(checked ? 'Anonymous mode on' : 'Anonymous mode off');
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </Card>
+                </div>
+
                 {/* Settings */}
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
@@ -341,6 +416,18 @@ const Profile = () => {
       </PullToRefresh>
 
       <BottomNav />
+
+      {/* Campus Setup Dialog */}
+      <CampusSetupDialog
+        open={showCampusDialog}
+        onOpenChange={setShowCampusDialog}
+        email={profile?.email || ''}
+        onConfirm={async (campus) => {
+          await updateProfile({ campus } as any);
+          setShowCampusDialog(false);
+          toast.success(`Campus set to ${campus}`);
+        }}
+      />
     </div>
   );
 };

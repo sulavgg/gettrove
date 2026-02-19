@@ -20,6 +20,7 @@ import GroupSettings from "./pages/GroupSettings";
 import Post from "./pages/Post";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import Campus from "./pages/Campus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const AppRoutes = () => {
       <Route path="/group/:id/chat" element={<ProtectedRoute><GroupChat /></ProtectedRoute>} />
       <Route path="/group/:id/settings" element={<ProtectedRoute><GroupSettings /></ProtectedRoute>} />
       <Route path="/post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
+      <Route path="/campus" element={<ProtectedRoute><Campus /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       
