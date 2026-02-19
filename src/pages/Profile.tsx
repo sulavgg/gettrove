@@ -142,7 +142,7 @@ const Profile = () => {
             ) : (
               <>
                 {/* Profile Card */}
-                <Card className="p-6 bg-card border-border mb-6">
+                <Card className="p-6 bg-card border border-white/[0.08] mb-6">
                   <div className="flex flex-col items-center">
                     <div className="relative mb-4">
                       <Avatar className="w-24 h-24">
@@ -155,7 +155,7 @@ const Profile = () => {
                         className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground"
                         onClick={() => triggerHaptic('light')}
                       >
-                        <Camera className="w-4 h-4" />
+                        <Camera className="w-4 h-4" strokeWidth={1.5} />
                       </button>
                     </div>
 
@@ -166,12 +166,12 @@ const Profile = () => {
                       <span className="text-muted-foreground">{profile?.email}</span>
                       {isEmailVerified ? (
                         <span className="flex items-center gap-1 text-success text-xs">
-                          <CheckCircle className="w-3 h-3" />
+                          <CheckCircle className="w-3 h-3" strokeWidth={1.5} />
                           Verified
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-warning text-xs">
-                          <AlertTriangle className="w-3 h-3" />
+                          <AlertTriangle className="w-3 h-3" strokeWidth={1.5} />
                           Unverified
                         </span>
                       )}
@@ -195,7 +195,7 @@ const Profile = () => {
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <>
-                            <Mail className="w-4 h-4" />
+                            <Mail className="w-4 h-4" strokeWidth={1.5} />
                             Resend Verification Email
                           </>
                         )}
@@ -206,7 +206,7 @@ const Profile = () => {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Active Streaks
                     </p>
@@ -214,7 +214,7 @@ const Profile = () => {
                       🔥 {stats.activeStreaks}
                     </p>
                   </Card>
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Total Check-ins
                     </p>
@@ -222,7 +222,7 @@ const Profile = () => {
                       ✅ {stats.totalCheckins}
                     </p>
                   </Card>
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Longest Streak
                     </p>
@@ -230,7 +230,7 @@ const Profile = () => {
                       🏆 {stats.longestStreak} days
                     </p>
                   </Card>
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Groups Joined
                     </p>
@@ -258,7 +258,7 @@ const Profile = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                     Weekly Recap
                   </h3>
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <WeeklyRecapViewer />
                   </Card>
                 </div>
@@ -268,7 +268,7 @@ const Profile = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                     Badges
                   </h3>
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <div className="grid grid-cols-4 gap-4">
                       {[
                         { emoji: '🔥', name: 'Week Warrior', days: 7, earned: stats.longestStreak >= 7 },
@@ -299,13 +299,13 @@ const Profile = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                     Settings
                   </h3>
-                  <Card className="p-4 bg-card border-border">
+                  <Card className="p-4 bg-card border border-white/[0.08]">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {theme === 'dark' ? (
-                          <Moon className="w-5 h-5 text-primary" />
+                          <Moon className="w-5 h-5 text-primary" strokeWidth={1.5} />
                         ) : (
-                          <Sun className="w-5 h-5 text-warning" />
+                          <Sun className="w-5 h-5 text-warning" strokeWidth={1.5} />
                         )}
                         <div>
                           <p className="font-medium text-foreground">Dark Mode</p>
@@ -331,7 +331,7 @@ const Profile = () => {
                   onClick={handleSignOut}
                   className="w-full gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" strokeWidth={1.5} />
                   Sign Out
                 </Button>
               </>

@@ -179,7 +179,7 @@ const JoinGroup = () => {
         </p>
         <Button 
           onClick={() => navigate(`/group/${group.id}`)}
-          className="gradient-primary"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           Go to Group
         </Button>
@@ -227,7 +227,7 @@ const JoinGroup = () => {
         <Button
           onClick={handleJoin}
           disabled={joining}
-          className="w-full h-12 gradient-primary font-bold uppercase tracking-wide shadow-glow"
+          className="w-full h-12 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90"
         >
           {joining ? (
             <Loader2 className="w-5 h-5 animate-spin" />

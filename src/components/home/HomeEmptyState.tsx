@@ -19,23 +19,23 @@ export const HomeEmptyState = ({ onCreateGroup, onJoinGroup }: HomeEmptyStatePro
         {/* Icon composition */}
         <div className="relative flex items-center justify-center w-32 h-32">
           <div className="absolute animate-float" style={{ animationDelay: '0s' }}>
-            <div className="w-16 h-16 rounded-2xl gradient-primary shadow-glow flex items-center justify-center">
-              <Users className="w-8 h-8 text-primary-foreground" />
+            <div className="w-16 h-16 rounded-2xl bg-primary shadow-glow flex items-center justify-center">
+              <Users className="w-8 h-8 text-primary-foreground" strokeWidth={1.5} />
             </div>
           </div>
           <div className="absolute -top-4 -right-4 animate-float" style={{ animationDelay: '0.5s' }}>
             <div className="w-10 h-10 rounded-xl bg-warning/20 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-warning" />
+              <Flame className="w-5 h-5 text-warning" strokeWidth={1.5} />
             </div>
           </div>
           <div className="absolute -bottom-2 -left-4 animate-float" style={{ animationDelay: '1s' }}>
             <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-success" />
+              <Trophy className="w-5 h-5 text-success" strokeWidth={1.5} />
             </div>
           </div>
           <div className="absolute -top-2 -left-6 animate-float" style={{ animationDelay: '1.5s' }}>
             <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <Target className="w-4 h-4 text-accent" />
+              <Target className="w-4 h-4 text-accent" strokeWidth={1.5} />
             </div>
           </div>
         </div>
@@ -56,9 +56,9 @@ export const HomeEmptyState = ({ onCreateGroup, onJoinGroup }: HomeEmptyStatePro
             triggerHaptic('medium');
             onCreateGroup();
           }}
-          className="w-full h-14 gradient-primary shadow-glow font-bold text-lg gap-2"
+          className="w-full h-14 bg-primary text-primary-foreground shadow-glow font-bold text-lg gap-2 hover:bg-primary/90"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" strokeWidth={1.5} />
           Create My First Group
         </Button>
         <Button
@@ -69,7 +69,7 @@ export const HomeEmptyState = ({ onCreateGroup, onJoinGroup }: HomeEmptyStatePro
           }}
           className="w-full h-12 border-primary text-primary hover:bg-primary/10 font-semibold gap-2"
         >
-          <LinkIcon className="w-4 h-4" />
+          <LinkIcon className="w-4 h-4" strokeWidth={1.5} />
           Join a Friend's Group
         </Button>
       </div>

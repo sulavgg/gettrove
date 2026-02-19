@@ -10,7 +10,7 @@ const slides = [
     icon: '📸',
     title: 'Welcome to TROVE',
     subtitle: 'Build Your Treasure Through Consistent Action',
-    description: 'Consistency is Currency. Small daily investments compound into something valuable.',
+    description: '',
   },
   {
     title: 'How Trove Works',
@@ -22,7 +22,7 @@ const slides = [
   },
   {
     title: 'Your Momentum Matters',
-    subtitle: 'Build your treasure, one day at a time.',
+    subtitle: '',
     details: [
       'Base: 25 pts per post',
       'Bonuses for timing (optional)',
@@ -77,7 +77,7 @@ const Onboarding = () => {
           </p>
         )}
 
-        {slide.description && (
+        {slide.description && slide.description.length > 0 && (
           <p className="text-muted-foreground text-center mt-2 max-w-xs italic">
             {slide.description}
           </p>
@@ -117,7 +117,7 @@ const Onboarding = () => {
           <div className="mt-8 w-full max-w-sm space-y-3">
             <Button
               onClick={() => handleComplete('create')}
-              className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow text-lg"
+              className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow text-lg hover:bg-primary/90"
             >
               Create My First Group
             </Button>
@@ -159,7 +159,7 @@ const Onboarding = () => {
         <div className="px-6 pb-8 safe-area-bottom">
           <Button
             onClick={handleNext}
-            className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow"
+            className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90"
           >
             Continue
           </Button>

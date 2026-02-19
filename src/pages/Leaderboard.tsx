@@ -239,7 +239,7 @@ const Leaderboard = () => {
               <>
                 {/* Group Stats */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-card rounded-xl p-4 border border-border">
+                  <div className="bg-card rounded-xl p-4 border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Avg Streak
                     </p>
@@ -247,7 +247,7 @@ const Leaderboard = () => {
                       🔥 {avgStreak} days
                     </p>
                   </div>
-                  <div className="bg-card rounded-xl p-4 border border-border">
+                  <div className="bg-card rounded-xl p-4 border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Total Check-ins
                     </p>
@@ -270,8 +270,8 @@ const Leaderboard = () => {
                           className={cn(
                             'flex items-center gap-3 p-4 rounded-xl border transition-colors',
                             isCurrentUser
-                              ? 'bg-primary/10 border-primary/20'
-                              : 'bg-card border-border'
+                              ? 'bg-primary/10 border-primary/30'
+                              : 'bg-card border-white/[0.08]'
                           )}
                         >
                           <div className="w-8 text-center flex-shrink-0">

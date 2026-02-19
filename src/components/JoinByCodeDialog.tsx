@@ -86,7 +86,7 @@ export const JoinByCodeDialog = ({ open, onOpenChange }: JoinByCodeDialogProps) 
             </Button>
             <Button
               type="submit"
-              className="flex-1 gradient-primary"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={code.trim().length < 4 || loading}
             >
               {loading ? (

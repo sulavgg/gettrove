@@ -522,7 +522,7 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
       >
         <Button
           onClick={onShare}
-          className="w-full h-14 gradient-primary font-bold gap-2"
+          className="w-full h-14 bg-primary text-primary-foreground font-bold gap-2 hover:bg-primary/90"
         >
           <Instagram className="w-5 h-5" />
           Share to Instagram Story

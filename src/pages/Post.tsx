@@ -399,7 +399,7 @@ const Post = () => {
             You need to verify your email address before posting check-ins. Check your inbox at{' '}
             <strong>{profile?.email}</strong> for the verification link.
           </p>
-          <Button onClick={handleResendVerification} disabled={resending} className="w-full h-12 gradient-primary font-semibold">
+          <Button onClick={handleResendVerification} disabled={resending} className="w-full h-12 bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
             {resending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Resend Verification Email'}
           </Button>
         </div>
@@ -472,7 +472,7 @@ const Post = () => {
         )}
 
         <p className="text-muted-foreground text-center mb-8">Great job! Keep it up tomorrow.</p>
-        <Button onClick={() => navigate('/')} className="gradient-primary shadow-glow font-bold uppercase tracking-wide">
+        <Button onClick={() => navigate('/')} className="bg-primary text-primary-foreground shadow-glow font-bold uppercase tracking-wide hover:bg-primary/90">
           Back to Home
         </Button>
       </div>
@@ -507,7 +507,7 @@ const Post = () => {
         <p className="text-muted-foreground text-center text-sm mb-6">
           Both photos are timestamped and must be taken within 30 seconds for verification.
         </p>
-        <Button onClick={() => setShowFirstTimeGuide(false)} className="w-full max-w-sm h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow">
+        <Button onClick={() => setShowFirstTimeGuide(false)} className="w-full max-w-sm h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90">
           Got it, let's post
         </Button>
       </div>
@@ -623,13 +623,13 @@ const Post = () => {
           {uploading && (
             <div className="mb-6">
               <div className="h-2 bg-input rounded-full overflow-hidden">
-                <div className="h-full gradient-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
               </div>
               <p className="text-sm text-muted-foreground text-center mt-2">Uploading... {uploadProgress}%</p>
             </div>
           )}
 
-          <Button onClick={handlePost} disabled={uploading} className="w-full h-14 gradient-primary font-bold uppercase tracking-wide shadow-glow">
+          <Button onClick={handlePost} disabled={uploading} className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90">
             {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Post Now'}
           </Button>
         </div>

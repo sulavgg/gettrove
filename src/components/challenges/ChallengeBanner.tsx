@@ -44,7 +44,7 @@ export const ChallengeBanner = ({ challenge, weekEnd, nextChallenge }: Challenge
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-bold text-foreground text-sm">{challenge.name}</h3>
                 <Badge variant="secondary" className="bg-warning/20 text-warning border-warning/30 text-xs font-bold">
-                  <Zap className="w-3 h-3 mr-0.5" />
+                  <Zap className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                   {challenge.multiplier}x
                 </Badge>
               </div>
@@ -54,13 +54,13 @@ export const ChallengeBanner = ({ challenge, weekEnd, nextChallenge }: Challenge
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
+              <Clock className="w-3 h-3" strokeWidth={1.5} />
               <span>{countdownText}</span>
             </div>
-            {expanded ? (
-              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+             {expanded ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
             ) : (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
             )}
           </div>
         </div>
@@ -71,7 +71,7 @@ export const ChallengeBanner = ({ challenge, weekEnd, nextChallenge }: Challenge
         <div className="px-4 pb-4 space-y-3 border-t border-border/50 pt-3">
           {/* Rules */}
           <div className="flex items-start gap-2">
-            <Trophy className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+            <Trophy className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
             <p className="text-xs text-muted-foreground">{challenge.rules}</p>
           </div>
 

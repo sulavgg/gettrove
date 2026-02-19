@@ -123,7 +123,7 @@ export const EnhancedGroupCard = ({
                 {currentStreak}
               </span>
             </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export const EnhancedGroupCard = ({
         <div className="flex items-center gap-4 mb-3 text-sm">
           {isLocked ? (
             <div className="flex items-center gap-1.5 text-warning">
-              <Lock className="w-3.5 h-3.5" />
+              <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
               <span>🔒 {memberCount}/{MIN_GROUP_MEMBERS} members — Invite {MIN_GROUP_MEMBERS - memberCount} more</span>
             </div>
           ) : (
@@ -146,12 +146,12 @@ export const EnhancedGroupCard = ({
                     : 'text-destructive'
                 )}
               >
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
                 <span>{getLastCheckinText()}</span>
               </div>
               
               <div className="flex items-center gap-1.5 text-muted-foreground ml-auto">
-                <Users className="w-3.5 h-3.5" />
+                <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
                 <span>
                   {postedTodayCount}/{memberCount} posted
                 </span>

@@ -475,7 +475,7 @@ const Home = () => {
             onClick={() => triggerHaptic('light')}
           >
             <Link to="/create-group">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" strokeWidth={1.5} />
               New Group
             </Link>
           </Button>
@@ -515,11 +515,11 @@ const Home = () => {
                       onClick={() => setShowRecapBanner(false)}
                       className="absolute top-2 right-2 p-1 rounded-full hover:bg-background/50"
                     >
-                      <X className="w-4 h-4 text-muted-foreground" />
+                      <X className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
                     </button>
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-full bg-primary/20">
-                        <BarChart3 className="w-5 h-5 text-primary" />
+                        <BarChart3 className="w-5 h-5 text-primary" strokeWidth={1.5} />
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-foreground">📊 Your weekly recap is ready!</p>
@@ -530,7 +530,7 @@ const Home = () => {
                     </div>
                     <Button
                       onClick={handleOpenRecap}
-                      className="w-full mt-3 gradient-primary font-semibold"
+                      className="w-full mt-3 bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
                     >
                       View Recap
                     </Button>
