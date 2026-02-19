@@ -103,6 +103,7 @@ export type Database = {
           id: string
           photo_url: string
           selfie_url: string | null
+          shared_to_campus: boolean
           user_id: string
         }
         Insert: {
@@ -113,6 +114,7 @@ export type Database = {
           id?: string
           photo_url: string
           selfie_url?: string | null
+          shared_to_campus?: boolean
           user_id: string
         }
         Update: {
@@ -123,6 +125,7 @@ export type Database = {
           id?: string
           photo_url?: string
           selfie_url?: string | null
+          shared_to_campus?: boolean
           user_id?: string
         }
         Relationships: [
@@ -373,6 +376,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          anonymous_on_campus: boolean
+          campus: string | null
           created_at: string
           email: string
           email_frequency: string
@@ -384,11 +389,14 @@ export type Database = {
           notification_milestones: boolean | null
           onboarding_completed: boolean | null
           profile_photo_url: string | null
+          show_on_campus_feed: boolean
           theme: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          anonymous_on_campus?: boolean
+          campus?: string | null
           created_at?: string
           email: string
           email_frequency?: string
@@ -400,11 +408,14 @@ export type Database = {
           notification_milestones?: boolean | null
           onboarding_completed?: boolean | null
           profile_photo_url?: string | null
+          show_on_campus_feed?: boolean
           theme?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          anonymous_on_campus?: boolean
+          campus?: string | null
           created_at?: string
           email?: string
           email_frequency?: string
@@ -416,6 +427,7 @@ export type Database = {
           notification_milestones?: boolean | null
           onboarding_completed?: boolean | null
           profile_photo_url?: string | null
+          show_on_campus_feed?: boolean
           theme?: string
           updated_at?: string
           user_id?: string
@@ -775,6 +787,26 @@ export type Database = {
       }
     }
     Functions: {
+      get_campus_leaderboard: {
+        Args: { p_campus: string; p_habit_filter?: string }
+        Returns: {
+          current_streak: number
+          display_name: string
+          habit_type: string
+          is_anonymous: boolean
+          profile_photo_url: string
+          user_id: string
+        }[]
+      }
+      get_campus_stats: {
+        Args: { p_campus: string }
+        Returns: {
+          avg_streak: number
+          top_habit: string
+          top_habit_pct: number
+          total_students: number
+        }[]
+      }
       get_group_member_profiles: {
         Args: { p_group_id: string }
         Returns: {

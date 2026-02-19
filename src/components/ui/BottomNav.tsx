@@ -1,9 +1,10 @@
-import { Home, Trophy, BarChart3, User } from 'lucide-react';
+import { Home, Trophy, BarChart3, User, School } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
+  { icon: School, label: 'Campus', path: '/campus' },
   { icon: Trophy, label: 'Compete', path: '/leaderboard' },
   { icon: BarChart3, label: 'Stats', path: '/profile' },
   { icon: User, label: 'Profile', path: '/groups' },

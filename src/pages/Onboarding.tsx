@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
+import { CampusSetupDialog } from '@/components/campus/CampusSetupDialog';
+import { detectUniversityFromEmail } from '@/lib/universities';
 
 const slides = [
   {
@@ -35,11 +37,23 @@ const slides = [
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
+  const { updateProfile, profile } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [showCampusDialog, setShowCampusDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'create' | 'join' | 'skip' | null>(null);
 
   const handleComplete = async (action: 'create' | 'join' | 'skip') => {
+    // Show campus dialog before completing if no campus set
+    if (!profile?.campus) {
+      setPendingAction(action);
+      setShowCampusDialog(true);
+      return;
+    }
+    await finishOnboarding(action);
+  };
+
+  const finishOnboarding = async (action: 'create' | 'join' | 'skip') => {
     await updateProfile({ onboarding_completed: true });
     
     if (action === 'create') {
@@ -167,6 +181,27 @@ const Onboarding = () => {
       )}
 
       <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />
+      
+      <CampusSetupDialog
+        open={showCampusDialog}
+        onOpenChange={(open) => {
+          setShowCampusDialog(open);
+          if (!open && pendingAction) {
+            // User dismissed — continue without campus
+            finishOnboarding(pendingAction);
+            setPendingAction(null);
+          }
+        }}
+        email={profile?.email || ''}
+        onConfirm={async (campus) => {
+          await updateProfile({ campus } as any);
+          setShowCampusDialog(false);
+          if (pendingAction) {
+            await finishOnboarding(pendingAction);
+            setPendingAction(null);
+          }
+        }}
+      />
     </div>
   );
 };

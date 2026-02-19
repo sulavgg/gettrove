@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, X, Loader2, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, X, Loader2, Check, AlertTriangle, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +12,7 @@ import { PostGroupSelection } from '@/components/post/PostGroupSelection';
 import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 import { format } from 'date-fns';
 import { calculatePostPoints, type PointBreakdown } from '@/lib/points';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface GroupOption {
   id: string;
@@ -46,6 +47,7 @@ const Post = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [resending, setResending] = useState(false);
   const [lockedDialogGroup, setLockedDialogGroup] = useState<GroupOption | null>(null);
+  const [shareToCampus, setShareToCampus] = useState(true);
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -279,6 +281,7 @@ const Post = () => {
           selfie_url: selfieUrl,
           capture_timestamp: captureTimestamp,
           caption: caption.trim() || null,
+          shared_to_campus: shareToCampus && !!profile?.campus,
         } as any).select('id').single();
 
         if (checkinError) {
@@ -617,6 +620,21 @@ const Post = () => {
               rows={3}
             />
             <p className="text-xs text-muted-foreground mt-1">{caption.length}/100 characters</p>
+
+            {/* Share to Campus toggle */}
+            {profile?.campus && (
+              <div className="flex items-center gap-3 mt-4 p-3 bg-card rounded-xl border border-white/[0.08]">
+                <Checkbox
+                  id="share-campus"
+                  checked={shareToCampus}
+                  onCheckedChange={(checked) => setShareToCampus(!!checked)}
+                />
+                <label htmlFor="share-campus" className="flex items-center gap-2 text-sm text-foreground cursor-pointer flex-1">
+                  <Globe className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                  Share to Campus Feed
+                </label>
+              </div>
+            )}
           </div>
 
           {/* Upload progress */}

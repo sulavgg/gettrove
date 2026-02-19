@@ -15,6 +15,9 @@ interface Profile {
   notification_milestones: boolean;
   theme: string;
   email_frequency: string;
+  campus: string | null;
+  show_on_campus_feed: boolean;
+  anonymous_on_campus: boolean;
   created_at: string;
 }
 
