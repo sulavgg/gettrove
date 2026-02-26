@@ -13,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const { profile, updateProfile, user } = useAuth();
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [initialized, setInitialized] = useState(false);
 
   // Initialize theme from profile or localStorage fallback
@@ -23,7 +23,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       setInitialized(true);
     } else if (!initialized) {
       const stored = localStorage.getItem('trove-theme') as Theme | null;
-      setThemeState(stored || 'dark');
+      setThemeState(stored || 'light');
     }
   }, [profile?.theme]);
 
