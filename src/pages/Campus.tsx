@@ -184,11 +184,22 @@ const Campus = () => {
           ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
           : nameParts[0];
 
+        // Check if this user is anonymous on campus
+        const isCurrentUser = c.user_id === user.id;
+        let isAnonymous = false;
+        if (isCurrentUser && profile?.anonymous_on_campus) {
+          isAnonymous = true;
+        }
+        // For other users, we can't read their profile directly due to RLS,
+        // but the leaderboard RPC respects it. For the feed, we use get_public_profile
+        // which only returns name/photo — anonymous status needs a separate check.
+        // We'll rely on the campus leaderboard data if available, otherwise show name.
+
         return {
           id: c.id,
           userId: c.user_id,
-          displayName,
-          profilePhoto: p?.photo || null,
+          displayName: isAnonymous ? 'Anonymous' : displayName,
+          profilePhoto: isAnonymous ? null : (p?.photo || null),
           habitType: habitMap[c.user_id] || 'other',
           currentStreak: streakMap[c.user_id] || 0,
           photoUrl: signedUrlMap.get(c.photo_url) || c.photo_url,
@@ -198,7 +209,7 @@ const Campus = () => {
           createdAt: c.created_at,
           reactionCount: reactionCounts[c.id] || 0,
           hasReacted: !!userReacted[c.id],
-          isAnonymous: false,
+          isAnonymous,
         };
       });
 

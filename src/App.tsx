@@ -21,6 +21,7 @@ import Post from "./pages/Post";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Campus from "./pages/Campus";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join/:code" element={<JoinGroup />} />
       
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />

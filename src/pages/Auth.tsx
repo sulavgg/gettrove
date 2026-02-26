@@ -206,6 +206,33 @@ const Auth = () => {
               )}
             </div>
 
+            {mode === 'login' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!emailValidation.valid) {
+                    toast.error('Enter your email address first');
+                    return;
+                  }
+                  setLoading(true);
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    if (error) throw error;
+                    toast.success('Password reset email sent! Check your inbox.');
+                  } catch (err: any) {
+                    toast.error(err.message || 'Failed to send reset email');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="text-xs text-primary hover:underline w-full text-right -mt-1"
+              >
+                Forgot password?
+              </button>
+            )}
+
             <Button
               type="submit"
               className="w-full h-14 bg-[#F0B429] hover:bg-[#E0A520] text-[#1A1A1A] font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"

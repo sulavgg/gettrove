@@ -75,7 +75,7 @@ const Groups = () => {
             .select('current_streak')
             .eq('group_id', group.id)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           return {
             id: group.id,

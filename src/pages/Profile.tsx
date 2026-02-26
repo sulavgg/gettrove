@@ -153,12 +153,38 @@ const Profile = () => {
                           {initials}
                         </AvatarFallback>
                       </Avatar>
-                      <button 
-                        className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground"
+                      <label 
+                        className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground cursor-pointer"
                         onClick={() => triggerHaptic('light')}
                       >
                         <Camera className="w-4 h-4" strokeWidth={1.5} />
-                      </button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file || !user) return;
+                            try {
+                              const ext = file.name.split('.').pop();
+                              const path = `${user.id}/avatar.${ext}`;
+                              const { error: uploadError } = await supabase.storage
+                                .from('checkin-photos')
+                                .upload(path, file, { upsert: true });
+                              if (uploadError) throw uploadError;
+                              const { data: urlData } = supabase.storage
+                                .from('checkin-photos')
+                                .getPublicUrl(path);
+                              await updateProfile({ profile_photo_url: urlData.publicUrl } as any);
+                              toast.success('Profile photo updated!');
+                              triggerHaptic('success');
+                            } catch (err: any) {
+                              toast.error(err.message || 'Failed to upload photo');
+                              triggerHaptic('error');
+                            }
+                          }}
+                        />
+                      </label>
                     </div>
 
                     <h2 className="text-xl font-bold text-foreground mb-1">
