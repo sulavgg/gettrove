@@ -122,7 +122,7 @@ const Profile = () => {
     .slice(0, 2) || '??';
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="flex items-center justify-between px-4 py-4">
@@ -130,7 +130,7 @@ const Profile = () => {
         </div>
       </header>
 
-      <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-80px)]">
+      <PullToRefresh onRefresh={handleRefresh}>
         <PageTransition>
           <main className="px-4 py-6">
             {loading ? (
