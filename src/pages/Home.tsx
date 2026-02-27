@@ -432,7 +432,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       {/* Confetti overlay */}
       {showConfetti && (
         <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
