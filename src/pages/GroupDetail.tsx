@@ -252,7 +252,7 @@ const GroupDetail = () => {
   const percentage = members.length > 0 ? Math.round((postedCount / members.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="flex items-center justify-between px-4 py-4">

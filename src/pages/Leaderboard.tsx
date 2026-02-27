@@ -171,7 +171,7 @@ const Leaderboard = () => {
   const totalCheckins = entries.reduce((sum, e) => sum + e.total_checkins, 0);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border safe-area-top">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-black text-foreground mb-4">Leaderboard</h1>
