@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, Sun, Moon, Globe, EyeOff, School } from 'lucide-react';
+import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, Sun, Moon, School } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
@@ -328,12 +328,12 @@ const Profile = () => {
                     Campus Community
                   </h3>
                   <Card className="p-4 bg-card border border-white/[0.08] space-y-4">
-                    {/* Campus selection */}
+                    {/* University / Hometown */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <School className="w-5 h-5 text-primary" strokeWidth={1.5} />
                         <div>
-                          <p className="font-medium text-foreground">Campus</p>
+                          <p className="font-medium text-foreground">University / Hometown</p>
                           <p className="text-xs text-muted-foreground">
                             {profile?.campus || 'Not set'}
                           </p>
@@ -347,51 +347,6 @@ const Profile = () => {
                         {profile?.campus ? 'Change' : 'Set'}
                       </Button>
                     </div>
-
-                    {/* Show on campus feed toggle */}
-                    {profile?.campus && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Globe className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                            <div>
-                              <p className="font-medium text-foreground">Show on Campus Feed</p>
-                              <p className="text-xs text-muted-foreground">
-                                Your posts appear in the campus feed
-                              </p>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile?.show_on_campus_feed ?? true}
-                            onCheckedChange={async (checked) => {
-                              triggerHaptic('light');
-                              await updateProfile({ show_on_campus_feed: checked } as any);
-                              toast.success(checked ? 'Visible on campus feed' : 'Hidden from campus feed');
-                            }}
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <EyeOff className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-                            <div>
-                              <p className="font-medium text-foreground">Anonymous Mode</p>
-                              <p className="text-xs text-muted-foreground">
-                                Show as "Anonymous" on campus feed
-                              </p>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile?.anonymous_on_campus ?? false}
-                            onCheckedChange={async (checked) => {
-                              triggerHaptic('light');
-                              await updateProfile({ anonymous_on_campus: checked } as any);
-                              toast.success(checked ? 'Anonymous mode on' : 'Anonymous mode off');
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
                   </Card>
                 </div>
 
