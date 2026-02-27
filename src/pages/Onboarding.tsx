@@ -1,207 +1,154 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
-import { CampusSetupDialog } from '@/components/campus/CampusSetupDialog';
-import { detectUniversityFromEmail } from '@/lib/universities';
+import { ChevronLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const slides = [
-  {
-    icon: '📸',
-    title: 'Welcome to TROVE',
-    subtitle: 'Build Your Treasure Through Consistent Action',
-    description: '',
+import { OnboardingWelcome } from '@/components/onboarding/OnboardingWelcome';
+import { OnboardingName } from '@/components/onboarding/OnboardingName';
+import { OnboardingHabits } from '@/components/onboarding/OnboardingHabits';
+import { OnboardingStreakGoal } from '@/components/onboarding/OnboardingStreakGoal';
+import { OnboardingPhoto } from '@/components/onboarding/OnboardingPhoto';
+
+const TOTAL_STEPS = 5;
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
   },
-  {
-    title: 'How Trove Works',
-    steps: [
-      { icon: '📸', text: 'Post daily proof — document your habits with photos' },
-      { icon: '📊', text: 'Earn points — stack points through consistency and engagement' },
-      { icon: '🏆', text: 'Compete weekly — join challenges and win rewards' },
-    ],
-  },
-  {
-    title: 'Your Momentum Matters',
-    subtitle: '',
-    details: [
-      'Base: 25 pts per post',
-      'Bonuses for timing (optional)',
-      'Streak multipliers up to 1.5×',
-      'Engagement rewards',
-    ],
-    actions: true,
-  },
-];
+  exit: (direction: number) => ({
+    x: direction > 0 ? '-100%' : '100%',
+    opacity: 0,
+  }),
+};
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { updateProfile, profile } = useAuth();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [showJoinDialog, setShowJoinDialog] = useState(false);
-  const [showCampusDialog, setShowCampusDialog] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'create' | 'join' | 'skip' | null>(null);
+  const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1);
 
-  const handleComplete = async (action: 'create' | 'join' | 'skip') => {
-    // Show campus dialog before completing if no campus set
-    if (!profile?.campus) {
-      setPendingAction(action);
-      setShowCampusDialog(true);
-      return;
-    }
-    await finishOnboarding(action);
+  // Step data
+  const [name, setName] = useState(profile?.name || '');
+  const [username, setUsername] = useState('');
+  const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
+  const [streakGoal, setStreakGoal] = useState(7);
+
+  const goNext = () => {
+    setDirection(1);
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
   };
 
-  const finishOnboarding = async (action: 'create' | 'join' | 'skip') => {
-    await updateProfile({ onboarding_completed: true });
-    
-    if (action === 'create') {
-      navigate('/create-group');
-    } else if (action === 'join') {
-      setShowJoinDialog(true);
-    } else {
-      navigate('/');
-    }
+  const goBack = () => {
+    setDirection(-1);
+    setStep((s) => Math.max(s - 1, 0));
   };
 
-  const handleNext = () => {
-    if (currentSlide < slides.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    }
-  };
+  const handleSkip = () => goNext();
 
-  const slide = slides[currentSlide];
+  const handleFinish = async () => {
+    const updates: Record<string, any> = { onboarding_completed: true };
+    if (name.trim()) updates.name = name.trim();
+    await updateProfile(updates);
+    navigate('/');
+  };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        {/* Icon / Brand */}
-        {slide.icon && (
-          <span className="text-6xl mb-6 animate-scale-in">{slide.icon}</span>
-        )}
-
-        <h1 className="text-3xl font-black text-foreground text-center mb-3 font-heading tracking-tight">
-          {slide.title}
-        </h1>
-
-        {slide.subtitle && (
-          <p className="text-lg text-muted-foreground text-center max-w-xs">
-            {slide.subtitle}
-          </p>
-        )}
-
-        {slide.description && slide.description.length > 0 && (
-          <p className="text-muted-foreground text-center mt-2 max-w-xs italic">
-            {slide.description}
-          </p>
-        )}
-
-        {/* Steps */}
-        {slide.steps && (
-          <div className="mt-8 space-y-4 w-full max-w-sm">
-            {slide.steps.map((step, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border animate-slide-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <span className="text-2xl">{step.icon}</span>
-                <p className="text-foreground font-medium">{step.text}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Points details */}
-        {slide.details && (
-          <div className="mt-6 w-full max-w-sm bg-card rounded-xl border border-border p-4 space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Points System</p>
-            {slide.details.map((d, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm text-foreground">
-                <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-                <span>{d}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Actions for last slide */}
-        {slide.actions && (
-          <div className="mt-8 w-full max-w-sm space-y-3">
-            <Button
-              onClick={() => handleComplete('create')}
-              className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow text-lg hover:bg-primary/90"
-            >
-              Create My First Group
-            </Button>
-            <Button
-              onClick={() => handleComplete('join')}
-              variant="outline"
-              className="w-full h-14 font-bold uppercase tracking-wide"
-            >
-              Join a Friend's Group
-            </Button>
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Top bar: back + progress */}
+      {step > 0 && (
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg safe-area-top">
+          <div className="flex items-center gap-3 px-4 py-3">
             <button
-              onClick={() => handleComplete('skip')}
-              className="w-full text-center text-muted-foreground hover:text-foreground transition-colors py-2"
+              onClick={goBack}
+              className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors active:scale-95"
             >
-              I'll do this later
+              <ChevronLeft className="w-5 h-5" strokeWidth={1.5} />
             </button>
+
+            {/* Progress bar */}
+            <div className="flex-1 flex gap-1.5">
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-1 flex-1 rounded-full transition-all duration-500',
+                    i <= step ? 'bg-gold' : 'bg-muted'
+                  )}
+                />
+              ))}
+            </div>
+
+            <span className="text-xs text-muted-foreground font-tabular ml-2">
+              {step + 1}/{TOTAL_STEPS}
+            </span>
           </div>
-        )}
-      </div>
-
-      {/* Progress dots */}
-      <div className="flex items-center justify-center gap-2 py-6">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={cn(
-              'w-2 h-2 rounded-full transition-all duration-300',
-              index === currentSlide
-                ? 'w-6 bg-gold'
-                : 'bg-muted-foreground/30'
-            )}
-          />
-        ))}
-      </div>
-
-      {/* Next button (except last slide) */}
-      {!slide.actions && (
-        <div className="px-6 pb-8 safe-area-bottom">
-          <Button
-            onClick={handleNext}
-            className="w-full h-14 bg-primary text-primary-foreground font-bold uppercase tracking-wide shadow-glow hover:bg-primary/90"
-          >
-            Continue
-          </Button>
         </div>
       )}
 
-      <JoinByCodeDialog open={showJoinDialog} onOpenChange={setShowJoinDialog} />
-      
-      <CampusSetupDialog
-        open={showCampusDialog}
-        onOpenChange={(open) => {
-          setShowCampusDialog(open);
-          if (!open && pendingAction) {
-            // User dismissed — continue without campus
-            finishOnboarding(pendingAction);
-            setPendingAction(null);
-          }
-        }}
-        email={profile?.email || ''}
-        onConfirm={async (campus) => {
-          await updateProfile({ campus } as any);
-          setShowCampusDialog(false);
-          if (pendingAction) {
-            await finishOnboarding(pendingAction);
-            setPendingAction(null);
-          }
-        }}
-      />
+      {/* Animated step content */}
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={step}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.35 }}
+          className="flex-1 flex flex-col"
+        >
+          {step === 0 && <OnboardingWelcome onNext={goNext} />}
+          {step === 1 && (
+            <OnboardingName
+              name={name}
+              setName={setName}
+              username={username}
+              setUsername={setUsername}
+              onNext={goNext}
+              onSkip={handleSkip}
+            />
+          )}
+          {step === 2 && (
+            <OnboardingHabits
+              selectedHabits={selectedHabits}
+              setSelectedHabits={setSelectedHabits}
+              onNext={goNext}
+              onSkip={handleSkip}
+            />
+          )}
+          {step === 3 && (
+            <OnboardingStreakGoal
+              streakGoal={streakGoal}
+              setStreakGoal={setStreakGoal}
+              onNext={goNext}
+              onSkip={handleSkip}
+            />
+          )}
+          {step === 4 && <OnboardingPhoto onFinish={handleFinish} />}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Progress dots (welcome screen only) */}
+      {step === 0 && (
+        <div className="flex items-center justify-center gap-2 py-6 safe-area-bottom">
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'w-2 h-2 rounded-full transition-all duration-300',
+                i === step ? 'w-6 bg-gold' : 'bg-muted-foreground/30'
+              )}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
