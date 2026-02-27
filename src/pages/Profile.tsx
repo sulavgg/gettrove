@@ -327,10 +327,10 @@ const Profile = () => {
                 </div>
 
 
-                {/* Campus Settings */}
+                {/* Community */}
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    Campus Community
+                    Community
                   </h3>
                   <Card className="p-4 bg-card border border-white/[0.08] space-y-4">
                     {/* University / Hometown */}

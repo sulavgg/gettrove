@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, Search } from 'lucide-react';
 import { detectUniversityFromEmail, isEduEmail, universityList } from '@/lib/universities';
 
@@ -13,14 +12,17 @@ interface CampusSetupDialogProps {
   onConfirm: (campus: string) => void;
 }
 
+type EntryMode = 'university' | 'hometown';
+
 export const CampusSetupDialog = ({ open, onOpenChange, email, onConfirm }: CampusSetupDialogProps) => {
   const detectedUniversity = detectUniversityFromEmail(email);
   const hasEduEmail = isEduEmail(email);
   
   const [step, setStep] = useState<'detect' | 'manual'>(detectedUniversity ? 'detect' : 'manual');
+  const [mode, setMode] = useState<EntryMode>(hasEduEmail ? 'university' : 'hometown');
   const [selectedUniversity, setSelectedUniversity] = useState<string>(detectedUniversity || '');
   const [searchQuery, setSearchQuery] = useState('');
-  const [customUniversity, setCustomUniversity] = useState('');
+  const [hometown, setHometown] = useState('');
 
   useEffect(() => {
     if (detectedUniversity) {
@@ -36,17 +38,27 @@ export const CampusSetupDialog = ({ open, onOpenChange, email, onConfirm }: Camp
   );
 
   const handleConfirm = () => {
-    const campus = step === 'detect' ? selectedUniversity : (selectedUniversity || customUniversity);
-    if (campus.trim()) {
-      onConfirm(campus.trim());
+    const value = step === 'detect'
+      ? selectedUniversity
+      : mode === 'university'
+        ? selectedUniversity
+        : hometown;
+    if (value.trim()) {
+      onConfirm(value.trim());
     }
   };
+
+  const canConfirm = step === 'detect'
+    ? !!selectedUniversity
+    : mode === 'university'
+      ? !!selectedUniversity
+      : !!hometown.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">🏫 Set Your Campus</DialogTitle>
+          <DialogTitle className="text-center">📍 Set Your Community</DialogTitle>
         </DialogHeader>
 
         {step === 'detect' && detectedUniversity ? (
@@ -83,62 +95,82 @@ export const CampusSetupDialog = ({ open, onOpenChange, email, onConfirm }: Camp
           </div>
         ) : (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground text-center">
-              {hasEduEmail 
-                ? "We couldn't auto-detect your school. Please select it below."
-                : "Which school do you attend?"}
-            </p>
-
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-              <Input
-                placeholder="Search universities..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+            {/* Mode toggle */}
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => { setMode('university'); setHometown(''); }}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  mode === 'university'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted/30 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                🎓 University
+              </button>
+              <button
+                onClick={() => { setMode('hometown'); setSelectedUniversity(''); setSearchQuery(''); }}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  mode === 'hometown'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted/30 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                🏠 Hometown
+              </button>
             </div>
 
-            {/* University list */}
-            <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-lg p-1">
-              {filteredUniversities.map(uni => (
-                <button
-                  key={uni}
-                  onClick={() => {
-                    setSelectedUniversity(uni);
-                    setCustomUniversity('');
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    selectedUniversity === uni
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted text-foreground'
-                  }`}
-                >
-                  {uni}
-                </button>
-              ))}
-              {filteredUniversities.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-2">No results</p>
-              )}
-            </div>
+            {mode === 'university' ? (
+              <>
+                <p className="text-sm text-muted-foreground text-center">
+                  Search and select your university
+                </p>
 
-            {/* Manual entry */}
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Or enter manually:</p>
-              <Input
-                placeholder="Your university name"
-                value={customUniversity}
-                onChange={(e) => {
-                  setCustomUniversity(e.target.value);
-                  setSelectedUniversity('');
-                }}
-              />
-            </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+                  <Input
+                    placeholder="Search universities..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-lg p-1">
+                  {filteredUniversities.map(uni => (
+                    <button
+                      key={uni}
+                      onClick={() => setSelectedUniversity(uni)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        selectedUniversity === uni
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-muted text-foreground'
+                      }`}
+                    >
+                      {uni}
+                    </button>
+                  ))}
+                  {filteredUniversities.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">No results</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground text-center">
+                  Type your hometown or city
+                </p>
+                <Input
+                  placeholder="e.g. Austin, TX"
+                  value={hometown}
+                  onChange={(e) => setHometown(e.target.value)}
+                  autoFocus
+                />
+              </>
+            )}
 
             <Button
               onClick={handleConfirm}
-              disabled={!selectedUniversity && !customUniversity.trim()}
+              disabled={!canConfirm}
               className="w-full bg-primary text-primary-foreground font-semibold"
             >
               Confirm
