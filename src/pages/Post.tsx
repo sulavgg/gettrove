@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, X, Loader2, Check, AlertTriangle, Globe } from 'lucide-react';
+import { ArrowLeft, X, Loader2, Check, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
@@ -621,20 +621,6 @@ const Post = () => {
             />
             <p className="text-xs text-muted-foreground mt-1">{caption.length}/100 characters</p>
 
-            {/* Share to Campus toggle */}
-            {profile?.campus && (
-              <div className="flex items-center gap-3 mt-4 p-3 bg-card rounded-xl border border-white/[0.08]">
-                <Checkbox
-                  id="share-campus"
-                  checked={shareToCampus}
-                  onCheckedChange={(checked) => setShareToCampus(!!checked)}
-                />
-                <label htmlFor="share-campus" className="flex items-center gap-2 text-sm text-foreground cursor-pointer flex-1">
-                  <Globe className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                  Share to Campus Feed
-                </label>
-              </div>
-            )}
           </div>
 
           {/* Upload progress */}
