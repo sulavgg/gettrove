@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, Sun, Moon, School } from 'lucide-react';
+import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, School } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
@@ -19,7 +18,7 @@ import { PointsBreakdown } from '@/components/profile/PointsBreakdown';
 
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { CampusSetupDialog } from '@/components/campus/CampusSetupDialog';
 
 interface UserStats {
@@ -32,7 +31,6 @@ interface UserStats {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, profile, signOut, updateProfile, isEmailVerified, resendVerificationEmail } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [showCampusDialog, setShowCampusDialog] = useState(false);
   const [stats, setStats] = useState<UserStats>({
     activeStreaks: 0,
@@ -355,36 +353,6 @@ const Profile = () => {
                   </Card>
                 </div>
 
-                {/* Settings */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    Settings
-                  </h3>
-                  <Card className="p-4 bg-card border border-white/[0.08]">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {theme === 'dark' ? (
-                          <Moon className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                        ) : (
-                          <Sun className="w-5 h-5 text-warning" strokeWidth={1.5} />
-                        )}
-                        <div>
-                          <p className="font-medium text-foreground">Dark Mode</p>
-                          <p className="text-xs text-muted-foreground">
-                            {theme === 'dark' ? 'Dark theme active' : 'Light theme active'}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={theme === 'dark'}
-                        onCheckedChange={() => {
-                          triggerHaptic('light');
-                          toggleTheme();
-                        }}
-                      />
-                    </div>
-                  </Card>
-                </div>
 
                 {/* Sign Out */}
                 <Button
