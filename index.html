@@ -20,14 +20,8 @@
 
   <body>
     <script>
-      // Apply saved theme instantly to prevent flash
-      (function() {
-        var t = localStorage.getItem('trove-theme');
-        if (t === 'light') {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.classList.add('light');
-        }
-      })();
+      // Force dark mode always
+      document.documentElement.classList.add('dark');
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
