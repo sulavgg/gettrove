@@ -21,6 +21,7 @@ import Post from "./pages/Post";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,7 @@ const AppRoutes = () => {
       <Route path="/group/:id/settings" element={<ProtectedRoute><GroupSettings /></ProtectedRoute>} />
       <Route path="/post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+      <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       
       <Route path="*" element={<NotFound />} />
