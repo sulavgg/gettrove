@@ -9,9 +9,10 @@ import { OnboardingWelcome } from '@/components/onboarding/OnboardingWelcome';
 import { OnboardingName } from '@/components/onboarding/OnboardingName';
 import { OnboardingHabits } from '@/components/onboarding/OnboardingHabits';
 import { OnboardingStreakGoal } from '@/components/onboarding/OnboardingStreakGoal';
+import { OnboardingPoints } from '@/components/onboarding/OnboardingPoints';
 import { OnboardingPhoto } from '@/components/onboarding/OnboardingPhoto';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -131,7 +132,13 @@ const Onboarding = () => {
               onSkip={handleSkip}
             />
           )}
-          {step === 4 && <OnboardingPhoto onFinish={handleFinish} />}
+          {step === 4 && (
+            <OnboardingPoints
+              onNext={goNext}
+              onSkip={handleSkip}
+            />
+          )}
+          {step === 5 && <OnboardingPhoto onFinish={handleFinish} />}
         </motion.div>
       </AnimatePresence>
 
