@@ -70,10 +70,9 @@ const JoinGroup = () => {
 
       const memberIds = members?.map((m) => m.user_id) || [];
       
-      // Use secure RPC function to get public profile data (excludes email, enforces auth)
-      // Note: For join page, user may not be a member yet, so we use a limited approach
-      const { data: profiles } = await supabase
-        .rpc('get_group_member_profiles', { p_group_id: groupInfo.id });
+      // Use preview RPC that doesn't require membership (limited data, no email)
+      const { data: previews } = await supabase
+        .rpc('get_group_member_preview', { p_group_id: groupInfo.id } as any);
 
       setGroup({
         id: groupInfo.id,
@@ -81,7 +80,7 @@ const JoinGroup = () => {
         habit_type: groupInfo.habit_type as HabitType,
         custom_habit: groupInfo.custom_habit,
         member_count: memberIds.length,
-        members: (profiles || []).map((p: any) => ({
+        members: (previews || []).map((p: any) => ({
           name: p.name,
           photo: p.profile_photo_url,
         })),

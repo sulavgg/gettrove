@@ -807,6 +807,13 @@ export type Database = {
           total_students: number
         }[]
       }
+      get_group_member_preview: {
+        Args: { p_group_id: string }
+        Returns: {
+          name: string
+          profile_photo_url: string
+        }[]
+      }
       get_group_member_profiles: {
         Args: { p_group_id: string }
         Returns: {

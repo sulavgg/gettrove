@@ -162,10 +162,12 @@ const GroupDetail = () => {
 
       // Get reaction counts
       const checkinIds = checkins?.map((c) => c.id) || [];
-      const { data: reactions } = await supabase
-        .from('reactions')
-        .select('checkin_id, user_id')
-        .in('checkin_id', checkinIds);
+      const { data: reactions } = checkinIds.length > 0
+        ? await supabase
+            .from('reactions')
+            .select('checkin_id, user_id')
+            .in('checkin_id', checkinIds)
+        : { data: [] };
 
       // Get streaks
       const { data: streaks } = await supabase

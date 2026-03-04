@@ -37,16 +37,17 @@ export const OnboardingPhoto = ({ onFinish }: Props) => {
       const ext = file.name.split('.').pop();
       const path = `${user.id}/avatar.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('checkin-photos')
+        .from('avatars')
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('checkin-photos')
+        .from('avatars')
         .getPublicUrl(path);
 
-      await updateProfile({ profile_photo_url: urlData.publicUrl } as any);
-      setPhotoUrl(urlData.publicUrl);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      await updateProfile({ profile_photo_url: publicUrl } as any);
+      setPhotoUrl(publicUrl);
       toast.success('Photo uploaded!');
       triggerHaptic('success');
     } catch (err: any) {
