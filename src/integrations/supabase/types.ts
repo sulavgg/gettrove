@@ -138,6 +138,39 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          body: string
+          created_at: string | null
+          id: string
+          subject: string
+          type: string
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          id?: string
+          subject: string
+          type: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          id?: string
+          subject?: string
+          type?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       group_invites: {
         Row: {
           created_at: string

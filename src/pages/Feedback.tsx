@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Feedback = () => {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
 
   // Issue form
   const [issueDesc, setIssueDesc] = useState('');
@@ -26,6 +26,18 @@ const Feedback = () => {
   const [featureSending, setFeatureSending] = useState(false);
   const [featureSuccess, setFeatureSuccess] = useState(false);
 
+  const submitFeedback = async (type: 'issue' | 'feature', subject: string, body: string) => {
+    const { error } = await supabase.from('feedback' as any).insert({
+      user_id: user?.id,
+      user_name: profile?.name || 'Unknown',
+      user_email: profile?.email || user?.email || 'Unknown',
+      type,
+      subject,
+      body,
+    });
+    if (error) throw error;
+  };
+
   const handleIssueSubmit = async () => {
     if (!issueDesc.trim()) {
       toast.error('Please describe the issue');
@@ -37,10 +49,7 @@ const Feedback = () => {
       if (issueSteps.trim()) body += `\n\nSteps to reproduce:\n${issueSteps}`;
       if (issueFile) body += `\n\n[Screenshot attached: ${issueFile.name}]`;
 
-      const { error } = await supabase.functions.invoke('send-feedback', {
-        body: { type: 'issue', subject: issueDesc.slice(0, 80), body },
-      });
-      if (error) throw error;
+      await submitFeedback('issue', issueDesc.slice(0, 80), body);
 
       setIssueSuccess(true);
       setIssueDesc('');
@@ -64,10 +73,7 @@ const Feedback = () => {
       let body = `Feature: ${featureTitle}`;
       if (featureDesc.trim()) body += `\n\nWhy it would be useful:\n${featureDesc}`;
 
-      const { error } = await supabase.functions.invoke('send-feedback', {
-        body: { type: 'feature', subject: featureTitle.slice(0, 80), body },
-      });
-      if (error) throw error;
+      await submitFeedback('feature', featureTitle.slice(0, 80), body);
 
       setFeatureSuccess(true);
       setFeatureTitle('');
