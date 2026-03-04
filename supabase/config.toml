@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.send-challenge-results-email]
 verify_jwt = false
+
+[functions.send-feedback]
+verify_jwt = false
