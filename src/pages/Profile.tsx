@@ -4,7 +4,7 @@ import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, Sc
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TubelightNavbar } from '@/components/ui/tubelight-navbar';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -388,7 +388,7 @@ const Profile = () => {
         </PageTransition>
       </PullToRefresh>
 
-      <BottomNav />
+      <TubelightNavbar />
 
       {/* Campus Setup Dialog */}
       <CampusSetupDialog

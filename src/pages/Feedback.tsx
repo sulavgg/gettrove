@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TubelightNavbar } from '@/components/ui/tubelight-navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -219,7 +219,7 @@ const Feedback = () => {
           </TabsContent>
         </Tabs>
       </div>
-      <BottomNav />
+      <TubelightNavbar />
     </div>
   );
 };

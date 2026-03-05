@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckInCard } from '@/components/CheckInCard';
 import { EmptyState } from '@/components/EmptyState';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TubelightNavbar } from '@/components/ui/tubelight-navbar';
 import { FAB } from '@/components/ui/FAB';
 import { LeaderboardTab } from '@/components/LeaderboardTab';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
@@ -496,7 +496,7 @@ const GroupDetail = () => {
       </PullToRefresh>
 
       {isUnlocked && <FAB />}
-      <BottomNav />
+      <TubelightNavbar />
     </div>
   );
 };
