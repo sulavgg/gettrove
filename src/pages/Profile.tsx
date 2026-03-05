@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
 
 import { CampusSetupDialog } from '@/components/campus/CampusSetupDialog';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface UserStats {
   activeStreaks: number;
@@ -326,6 +327,22 @@ const Profile = () => {
                   </Card>
                 </div>
 
+
+                {/* Appearance */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    Appearance
+                  </h3>
+                  <Card className="p-4 bg-card border border-border">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Theme</p>
+                        <p className="text-xs text-muted-foreground">Switch between light and dark mode</p>
+                      </div>
+                      <ThemeToggle />
+                    </div>
+                  </Card>
+                </div>
 
                 {/* Community */}
                 <div className="mb-6">
