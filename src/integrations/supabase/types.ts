@@ -820,6 +820,10 @@ export type Database = {
       }
     }
     Functions: {
+      award_post_points: {
+        Args: { p_checkin_id: string; p_group_id: string }
+        Returns: Json
+      }
       get_campus_leaderboard: {
         Args: { p_campus: string; p_habit_filter?: string }
         Returns: {
