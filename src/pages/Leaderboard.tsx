@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TubelightNavbar } from '@/components/ui/tubelight-navbar';
 import { EmptyState } from '@/components/EmptyState';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -321,7 +321,7 @@ const Leaderboard = () => {
         </PageTransition>
       </PullToRefresh>
 
-      <BottomNav />
+      <TubelightNavbar />
     </div>
   );
 };

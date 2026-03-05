@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, BarChart3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TubelightNavbar } from '@/components/ui/tubelight-navbar';
 import { FAB } from '@/components/ui/FAB';
 import { JoinByCodeDialog } from '@/components/JoinByCodeDialog';
 import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
@@ -614,7 +614,7 @@ const Home = () => {
           : <FAB pulse={hasAnyUnlockedUnposted} />
       )}
 
-      <BottomNav />
+      <TubelightNavbar />
     </div>
   );
 };

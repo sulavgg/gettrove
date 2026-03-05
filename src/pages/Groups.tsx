@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TubelightNavbar } from '@/components/ui/tubelight-navbar';
 import { EmptyState } from '@/components/EmptyState';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -183,7 +183,7 @@ const Groups = () => {
         </PageTransition>
       </PullToRefresh>
 
-      <BottomNav />
+      <TubelightNavbar />
     </div>
   );
 };
