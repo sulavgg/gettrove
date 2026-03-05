@@ -299,41 +299,20 @@ const Post = () => {
 
         if (streakError) console.warn('Streak update warning:', streakError);
 
-        // Award posting points
+        // Award posting points server-side
         try {
-          const { data: streakData } = await supabase
-            .from('streaks')
-            .select('current_streak')
-            .eq('user_id', user.id)
-            .eq('group_id', groupId)
-            .single();
+          const { data: pointsResult } = await supabase.rpc('award_post_points', {
+            p_checkin_id: checkinData?.id,
+            p_group_id: groupId,
+          }) as { data: any };
 
-          const currentStreak = streakData?.current_streak || 0;
-          const postDate = captureTimestamp ? new Date(captureTimestamp) : new Date();
-          const breakdown = calculatePostPoints(postDate, currentStreak);
-
-          const txns: any[] = [
-            { user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: 'post_base', points: breakdown.base, description: 'Base posting points' },
-            ...breakdown.bonuses.map(b => ({
-              user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: b.key, points: b.points, description: b.label,
-            })),
-          ];
-
-          if (breakdown.multiplierBonus > 0) {
-            txns.push({ user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: 'streak_multiplier', points: breakdown.multiplierBonus, description: `🔥 Streak ×${breakdown.multiplier} bonus` });
+          if (pointsResult?.success) {
+            const postDate = captureTimestamp ? new Date(captureTimestamp) : new Date();
+            const breakdown = calculatePostPoints(postDate, pointsResult.streak || 0);
+            setEarnedPoints(breakdown);
           }
-          if (breakdown.streakMilestone > 0) {
-            txns.push({ user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: 'streak_milestone', points: breakdown.streakMilestone, description: `🏆 ${currentStreak}-day streak milestone!` });
-          }
-          if (breakdown.perfectBonus > 0) {
-            const desc = currentStreak === 30 ? '🌟 Perfect Month!' : `⭐ Perfect Week (${currentStreak} days)!`;
-            txns.push({ user_id: user.id, group_id: groupId, checkin_id: checkinData?.id, point_type: currentStreak === 30 ? 'perfect_month' : 'perfect_week', points: breakdown.perfectBonus, description: desc });
-          }
-
-          await (supabase as any).from('point_transactions').insert(txns);
-          setEarnedPoints(breakdown);
         } catch (ptErr) {
-          console.warn('Points calculation error:', ptErr);
+          console.warn('Points award error:', ptErr);
         }
 
         if (checkinData?.id) {
