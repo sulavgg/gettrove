@@ -97,10 +97,8 @@ const Auth = () => {
       <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-primary/10 rounded-full blur-[100px] -z-10" />
       
       {/* Logo */}
-      <div className="mb-10 text-center animate-fade-in">
-        <h1 className="text-5xl font-heading font-black tracking-tight mb-3">
-          <span className="text-foreground">TROVE</span>
-        </h1>
+      <div className="mb-10 text-center animate-fade-in flex flex-col items-center">
+        <img src="/favicon.png" alt="Trove" className="w-24 h-24 rounded-2xl mb-3" />
         <p className="text-muted-foreground/60 text-sm italic">
           Consistency is Currency
         </p>
