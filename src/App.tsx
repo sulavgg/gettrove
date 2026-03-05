@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Loader2 } from "lucide-react";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -99,6 +100,7 @@ const App = () => (
         <AuthProvider>
           <ThemeProvider>
             <AppRoutes />
+            <InstallPrompt />
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
