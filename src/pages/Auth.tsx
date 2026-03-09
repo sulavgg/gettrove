@@ -111,7 +111,7 @@ const Auth = () => {
             <button
               type="button"
               className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
-                mode === 'login' ? 'bg-[#F0B429] text-[#1A1A1A] shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
+                mode === 'login' ? 'bg-gold text-gold-foreground shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
               }`}
               onClick={() => setMode('login')}
             >
@@ -120,7 +120,7 @@ const Auth = () => {
             <button
               type="button"
               className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
-                mode === 'signup' ? 'bg-[#F0B429] text-[#1A1A1A] shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
+                mode === 'signup' ? 'bg-gold text-gold-foreground shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
               }`}
               onClick={() => setMode('signup')}
             >
@@ -233,7 +233,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full h-14 bg-[#F0B429] hover:bg-[#E0A520] text-[#1A1A1A] font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full h-14 bg-gold hover:bg-gold/90 text-gold-foreground font-semibold text-base rounded-xl shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               disabled={loading || !isFormValid}
             >
               {loading ? (

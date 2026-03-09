@@ -1,7 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -19,16 +17,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 43 47% 54%;
+    --primary-foreground: 0 0% 0%;
 
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 0%;
 
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 0 0% 90%;
+    --accent: 43 47% 54%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
@@ -40,8 +38,8 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --gold: 43 74% 52%;
-    --gold-foreground: 220 26% 14%;
+    --gold: 43 47% 54%;
+    --gold-foreground: 0 0% 0%;
 
     --bronze: 30 47% 50%;
     --bronze-foreground: 0 0% 100%;
@@ -49,46 +47,46 @@
     --border: 0 0% 85%;
     --input: 0 0% 85%;
     --input-background: 0 0% 96%;
-    --ring: 0 0% 0%;
+    --ring: 43 47% 54%;
 
     --radius: 0rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 0 0% 0%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 43 47% 54%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 90%;
     --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 0%;
-    --sidebar-ring: 0 0% 0%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 43 47% 54%;
 
     /* Trove gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(220 58% 11%) 0%, hsl(220 40% 25%) 50%, hsl(43 74% 52%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(220 58% 11%) 0%, hsl(220 45% 20%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(30 47% 50%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(30 40% 42%) 50%, hsl(220 40% 15%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(35 50% 42%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(30 40% 42%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(145 63% 42%) 0%, hsl(160 60% 38%) 100%);
     --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.8) 0%, hsl(40 20% 98% / 0.6) 100%);
 
     /* Calendar contribution levels */
     --cal-empty: 220 13% 91%;
-    --cal-level-1: 220 40% 80%;
-    --cal-level-2: 220 50% 65%;
-    --cal-level-3: 220 58% 45%;
-    --cal-streak-gold: 43 74% 52%;
+    --cal-level-1: 43 30% 80%;
+    --cal-level-2: 43 40% 65%;
+    --cal-level-3: 43 47% 50%;
+    --cal-streak-gold: 43 47% 54%;
 
     /* Shadows */
-    --shadow-glow: 0 0 30px hsl(43 74% 52% / 0.2);
-    --shadow-card: 0 4px 16px hsl(220 26% 14% / 0.06);
-    --shadow-elevated: 0 12px 32px hsl(220 26% 14% / 0.1);
-    --chart-1: 12 76% 61%;
+    --shadow-glow: 0 0 30px hsl(43 47% 54% / 0.2);
+    --shadow-card: 0 4px 16px hsl(0 0% 0% / 0.06);
+    --shadow-elevated: 0 12px 32px hsl(0 0% 0% / 0.1);
+    --chart-1: 43 47% 54%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
+    --chart-4: 43 47% 66%;
     --chart-5: 27 87% 67%;
     --sidebar: 0 0% 98%;
-    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --font-sans: 'Satoshi', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'DM Serif Display', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --shadow-2xs: 1px 1px 0px 0px #000000;
     --shadow-xs: 2px 2px 0px 0px #000000;
     --shadow-sm: 3px 3px 0px 0px #000000;
@@ -102,26 +100,26 @@
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 94%;
 
-    --card: 0 0% 0%;
-    --card-foreground: 0 0% 100%;
+    --card: 46 100% 5%;
+    --card-foreground: 0 0% 94%;
 
-    --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 220 18% 10%;
+    --popover-foreground: 0 0% 94%;
 
-    --primary: 0 0% 100%;
+    --primary: 43 47% 54%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 94%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 43 47% 54%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
@@ -132,59 +130,59 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --gold: 43 85% 55%;
-    --gold-foreground: 220 58% 8%;
+    --gold: 43 47% 54%;
+    --gold-foreground: 0 0% 0%;
 
     --bronze: 30 47% 50%;
     --bronze-foreground: 0 0% 100%;
 
-    --border: 0 0% 25%;
-    --input: 0 0% 25%;
-    --input-background: 0 0% 16%;
-    --ring: 43 85% 55%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.08;
+    --input-background: 0 0% 10%;
+    --ring: 43 47% 54%;
 
-    --sidebar-background: 220 40% 6%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 94%;
+    --sidebar-primary: 43 47% 54%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 100%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 94%;
+    --sidebar-border: 0 0% 100% / 0.08;
+    --sidebar-ring: 43 47% 54%;
 
     /* Trove gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(43 85% 55%) 0%, hsl(30 55% 48%) 50%, hsl(220 40% 25%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(43 85% 55%) 0%, hsl(35 70% 48%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43 85% 55%) 0%, hsl(30 55% 48%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(30 40% 42%) 50%, hsl(220 40% 15%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(35 50% 42%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(30 40% 42%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(145 63% 42%) 0%, hsl(160 60% 38%) 100%);
-    --gradient-glass: linear-gradient(135deg, hsl(220 30% 12% / 0.7) 0%, hsl(220 25% 8% / 0.5) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(46 100% 5% / 0.7) 0%, hsl(220 18% 10% / 0.5) 100%);
 
     /* Calendar contribution levels */
-    --cal-empty: 220 20% 18%;
-    --cal-level-1: 220 30% 30%;
-    --cal-level-2: 220 40% 45%;
-    --cal-level-3: 43 60% 50%;
-    --cal-streak-gold: 43 85% 55%;
+    --cal-empty: 220 20% 12%;
+    --cal-level-1: 43 30% 25%;
+    --cal-level-2: 43 40% 35%;
+    --cal-level-3: 43 47% 48%;
+    --cal-streak-gold: 43 47% 54%;
 
     /* Shadows */
-    --shadow-glow: 0 0 30px hsl(43 85% 55% / 0.3);
+    --shadow-glow: 0 0 30px hsl(43 47% 54% / 0.25);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 20px 40px hsl(0 0% 0% / 0.6);
-    --chart-1: 220 70% 50%;
+    --chart-1: 43 47% 54%;
     --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
+    --chart-3: 30 50% 45%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar: 0 0% 5%;
+    --sidebar: 0 0% 3%;
     --radius: 0rem;
-    --shadow-2xs: 1px 1px 0px 0px #ffffff;
-    --shadow-xs: 2px 2px 0px 0px #ffffff;
-    --shadow-sm: 3px 3px 0px 0px #ffffff;
-    --shadow: 5px 5px 0px 0px #ffffff;
-    --shadow-md: 8px 8px 0px 0px #ffffff;
-    --shadow-lg: 12px 12px 0px 0px #ffffff;
-    --shadow-xl: 16px 16px 0px 0px #ffffff;
-    --shadow-2xl: 24px 24px 0px 0px #ffffff;
+    --shadow-2xs: 1px 1px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow-xs: 2px 2px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow-sm: 3px 3px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow: 5px 5px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow-md: 8px 8px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow-lg: 12px 12px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow-xl: 16px 16px 0px 0px hsl(0 0% 100% / 0.05);
+    --shadow-2xl: 24px 24px 0px 0px hsl(0 0% 100% / 0.05);
   }
 }
 
@@ -194,7 +192,7 @@
   }
 
   html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 300ms ease, color 300ms ease;
@@ -206,8 +204,8 @@
 
   /* Heading font override */
   h1, h2, h3, .font-heading {
-    font-family: 'Montserrat', system-ui, sans-serif;
-    letter-spacing: -0.02em;
+    font-family: 'DM Serif Display', serif;
+    letter-spacing: -0.01em;
   }
 }
 
