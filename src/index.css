@@ -100,17 +100,17 @@
   }
 
   .dark {
-    --background: 0 0% 3%;
+    --background: 0 0% 5%;
     --foreground: 0 0% 94%;
 
     --card: 46 100% 5%;
     --card-foreground: 0 0% 94%;
 
-    --popover: 220 18% 10%;
+    --popover: 46 100% 5%;
     --popover-foreground: 0 0% 94%;
 
     --primary: 43 47% 54%;
-    --primary-foreground: 0 0% 0%;
+    --primary-foreground: 46 100% 5%;
 
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 94%;
