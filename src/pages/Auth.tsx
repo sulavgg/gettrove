@@ -120,7 +120,7 @@ const Auth = () => {
             <button
               type="button"
               className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
-                mode === 'signup' ? 'bg-[#F0B429] text-[#1A1A1A] shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
+                mode === 'signup' ? 'bg-gold text-gold-foreground shadow-md' : 'text-muted-foreground/50 hover:text-muted-foreground'
               }`}
               onClick={() => setMode('signup')}
             >
