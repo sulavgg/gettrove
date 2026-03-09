@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Space Grotesk',
+  				'Satoshi',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -28,21 +28,16 @@ export default {
   				'sans-serif'
   			],
   			heading: [
-  				'Montserrat',
-  				'system-ui',
-  				'sans-serif'
+  				'DM Serif Display',
+  				'serif'
   			],
   			serif: [
-  				'Lora',
+  				'DM Serif Display',
   				'ui-serif',
   				'Georgia',
-  				'Cambria',
-  				'Times New Roman',
-  				'Times',
   				'serif'
   			],
   			mono: [
-  				'Space Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
