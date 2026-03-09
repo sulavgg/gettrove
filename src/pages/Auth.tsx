@@ -98,7 +98,7 @@ const Auth = () => {
       
       {/* Logo */}
       <div className="mb-10 text-center animate-fade-in flex flex-col items-center">
-        <h1 className="font-heading text-[20px] font-black tracking-[0.15em] text-gold uppercase mb-3">
+        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: '20px', fontWeight: 400, letterSpacing: '0.15em', color: '#C9A84C', textTransform: 'uppercase' as const }}>
           TROVE
         </h1>
         <p className="text-muted-foreground/60 text-sm italic">
