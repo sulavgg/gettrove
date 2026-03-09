@@ -17,16 +17,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 43 47% 54%;
+    --primary-foreground: 0 0% 0%;
 
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 0%;
 
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 0 0% 90%;
+    --accent: 43 47% 54%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
@@ -38,8 +38,8 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --gold: 43 74% 52%;
-    --gold-foreground: 220 26% 14%;
+    --gold: 43 47% 54%;
+    --gold-foreground: 0 0% 0%;
 
     --bronze: 30 47% 50%;
     --bronze-foreground: 0 0% 100%;
@@ -47,46 +47,46 @@
     --border: 0 0% 85%;
     --input: 0 0% 85%;
     --input-background: 0 0% 96%;
-    --ring: 0 0% 0%;
+    --ring: 43 47% 54%;
 
     --radius: 0rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 0 0% 0%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 43 47% 54%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 90%;
     --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 0%;
-    --sidebar-ring: 0 0% 0%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 43 47% 54%;
 
     /* Trove gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(220 58% 11%) 0%, hsl(220 40% 25%) 50%, hsl(43 74% 52%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(220 58% 11%) 0%, hsl(220 45% 20%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(30 47% 50%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(30 40% 42%) 50%, hsl(220 40% 15%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(35 50% 42%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 47% 54%) 0%, hsl(30 40% 42%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(145 63% 42%) 0%, hsl(160 60% 38%) 100%);
     --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.8) 0%, hsl(40 20% 98% / 0.6) 100%);
 
     /* Calendar contribution levels */
     --cal-empty: 220 13% 91%;
-    --cal-level-1: 220 40% 80%;
-    --cal-level-2: 220 50% 65%;
-    --cal-level-3: 220 58% 45%;
-    --cal-streak-gold: 43 74% 52%;
+    --cal-level-1: 43 30% 80%;
+    --cal-level-2: 43 40% 65%;
+    --cal-level-3: 43 47% 50%;
+    --cal-streak-gold: 43 47% 54%;
 
     /* Shadows */
-    --shadow-glow: 0 0 30px hsl(43 74% 52% / 0.2);
-    --shadow-card: 0 4px 16px hsl(220 26% 14% / 0.06);
-    --shadow-elevated: 0 12px 32px hsl(220 26% 14% / 0.1);
-    --chart-1: 12 76% 61%;
+    --shadow-glow: 0 0 30px hsl(43 47% 54% / 0.2);
+    --shadow-card: 0 4px 16px hsl(0 0% 0% / 0.06);
+    --shadow-elevated: 0 12px 32px hsl(0 0% 0% / 0.1);
+    --chart-1: 43 47% 54%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
+    --chart-4: 43 47% 66%;
     --chart-5: 27 87% 67%;
     --sidebar: 0 0% 98%;
-    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --font-sans: 'Satoshi', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'DM Serif Display', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --shadow-2xs: 1px 1px 0px 0px #000000;
     --shadow-xs: 2px 2px 0px 0px #000000;
     --shadow-sm: 3px 3px 0px 0px #000000;
