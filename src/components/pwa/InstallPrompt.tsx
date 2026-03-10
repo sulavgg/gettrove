@@ -1,109 +1,86 @@
-import { useState, useEffect } from 'react';
-import { X, Download, Share } from 'lucide-react';
+import { X, Download, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
-const isIOS = () =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-
-const isStandalone = () =>
-  window.matchMedia('(display-mode: standalone)').matches ||
-  (navigator as any).standalone === true;
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { InstallInstructionsModal } from './InstallInstructionsModal';
+import { toast } from 'sonner';
 
 export const InstallPrompt = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showBanner, setShowBanner] = useState(false);
-  const [showIOSTip, setShowIOSTip] = useState(false);
-
-  useEffect(() => {
-    if (isStandalone()) return;
-
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) {
-      const dismissedAt = parseInt(dismissed, 10);
-      // Don't show again for 7 days
-      if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
-    }
-
-    if (isIOS()) {
-      setShowIOSTip(true);
-      return;
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowBanner(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+  const {
+    canShowBanner,
+    platform,
+    triggerInstall,
+    dismiss,
+    showIOSModal,
+    setShowIOSModal,
+    showAndroidModal,
+    setShowAndroidModal,
+  } = usePWAInstall();
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setShowBanner(false);
+    const accepted = await triggerInstall();
+    if (accepted) {
+      toast.success('App installed! Open from your home screen.');
     }
-    setDeferredPrompt(null);
   };
 
-  const handleDismiss = () => {
-    setShowBanner(false);
-    setShowIOSTip(false);
-    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
-  };
-
-  if (!showBanner && !showIOSTip) return null;
+  if (!canShowBanner) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-xl flex items-start gap-3">
-        <div className="p-2 rounded-xl bg-warning/15 flex-shrink-0">
-          {showIOSTip ? (
-            <Share className="w-5 h-5 text-warning" />
-          ) : (
-            <Download className="w-5 h-5 text-warning" />
-          )}
-        </div>
+    <>
+      <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+        <div className="bg-card border border-border rounded-2xl p-4 shadow-xl">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-gold/15 flex-shrink-0">
+              <Smartphone className="w-5 h-5 text-gold" />
+            </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-foreground text-sm">Install Trove</p>
-          {showIOSTip ? (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Tap <Share className="w-3 h-3 inline -mt-0.5" /> then <strong>"Add to Home Screen"</strong> to install Trove as an app.
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Add Trove to your home screen for the best experience.
-            </p>
-          )}
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-foreground text-sm">Install Trove</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Add to your home screen for faster access and an app-like experience.
+              </p>
 
-          {showBanner && (
-            <Button
-              size="sm"
-              onClick={handleInstall}
-              className="mt-2 h-8 text-xs bg-warning text-warning-foreground hover:bg-warning/90"
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  onClick={handleInstall}
+                  className="h-8 text-xs bg-gold text-gold-foreground hover:bg-gold/90"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Install Now
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={dismiss}
+                  className="h-8 text-xs text-muted-foreground"
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </div>
+
+            <button
+              onClick={dismiss}
+              className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+              aria-label="Dismiss install banner"
             >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Install App
-            </Button>
-          )}
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-
-        <button
-          onClick={handleDismiss}
-          className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
-    </div>
+
+      <InstallInstructionsModal
+        open={showIOSModal}
+        onOpenChange={setShowIOSModal}
+        platform="ios"
+      />
+      <InstallInstructionsModal
+        open={showAndroidModal}
+        onOpenChange={setShowAndroidModal}
+        platform="android"
+      />
+    </>
   );
 };
