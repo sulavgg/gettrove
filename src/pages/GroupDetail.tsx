@@ -225,6 +225,10 @@ const GroupDetail = () => {
         if (a.posted_today !== b.posted_today) {
           return a.posted_today ? -1 : 1;
         }
+        // Most recent post first
+        if (a.checkin && b.checkin) {
+          return new Date(b.checkin.created_at).getTime() - new Date(a.checkin.created_at).getTime();
+        }
         return b.current_streak - a.current_streak;
       });
 
