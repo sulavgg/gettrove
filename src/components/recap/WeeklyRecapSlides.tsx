@@ -467,11 +467,28 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
                     data.weekPhotos.length === 1 ? "aspect-[4/3]" : "aspect-square"
                   )}
                 >
-                  <img
-                    src={photo.photoUrl}
-                    alt={`Check-in on ${photo.dayName}`}
-                    className="w-full h-full object-cover"
-                  />
+                  {photo.selfieUrl ? (
+                    <div className="w-full h-full relative">
+                      <img
+                        src={photo.photoUrl}
+                        alt={`Activity on ${photo.dayName}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-1 right-1 w-[28%] aspect-square rounded-md overflow-hidden border-2 border-background shadow-lg">
+                        <img
+                          src={photo.selfieUrl}
+                          alt={`Selfie on ${photo.dayName}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={photo.photoUrl}
+                      alt={`Check-in on ${photo.dayName}`}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2">
                     <p className="text-white text-[10px] font-bold uppercase tracking-wide">
                       {photo.dayName}
