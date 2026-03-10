@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfWeek, endOfWeek, subWeeks, eachDayOfInterval, parseISO } from 'date-fns';
 import type { RecapData, WeekPhoto } from '@/components/recap/WeeklyRecapSlides';
+import { getSignedPhotoUrls } from '@/lib/storage';
 
 interface DayStatus {
   day: string;

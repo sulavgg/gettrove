@@ -12,6 +12,7 @@ interface DayStatus {
 export interface WeekPhoto {
   id: string;
   photoUrl: string;
+  selfieUrl?: string | null;
   caption?: string | null;
   createdAt: string;
   dayName: string;
