@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, School } from 'lucide-react';
+import { InstallAppSection } from '@/components/pwa/InstallAppSection';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
