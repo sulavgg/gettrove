@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfWeek, endOfWeek, subWeeks, eachDayOfInterval, parseISO } from 'date-fns';
 import type { RecapData, WeekPhoto } from '@/components/recap/WeeklyRecapSlides';
+import { getSignedPhotoUrls } from '@/lib/storage';
 
 interface DayStatus {
   day: string;
@@ -56,10 +57,9 @@ export const useWeeklyRecap = () => {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
     try {
-      // Fetch checkins with group info for all groups
       const { data: checkins } = await supabase
         .from('checkins')
-        .select('id, photo_url, caption, created_at, group_id')
+        .select('id, photo_url, selfie_url, caption, created_at, group_id')
         .eq('user_id', user.id)
         .gte('created_at', `${weekStart}T00:00:00`)
         .lte('created_at', `${weekEnd}T23:59:59`)
@@ -67,7 +67,7 @@ export const useWeeklyRecap = () => {
 
       if (!checkins || checkins.length === 0) return [];
 
-      // Fetch group names for all unique group_ids
+      // Fetch group names
       const uniqueGroupIds = [...new Set(checkins.map(c => c.group_id))];
       const { data: groups } = await supabase
         .from('groups')
@@ -77,9 +77,19 @@ export const useWeeklyRecap = () => {
       const groupNameMap: Record<string, string> = {};
       groups?.forEach(g => { groupNameMap[g.id] = g.name; });
 
+      // Collect all photo paths that need signed URLs
+      const allPaths: string[] = [];
+      checkins.forEach(c => {
+        if (c.photo_url) allPaths.push(c.photo_url);
+        if (c.selfie_url) allPaths.push(c.selfie_url);
+      });
+
+      const signedUrlMap = await getSignedPhotoUrls(allPaths);
+
       return checkins.map(c => ({
         id: c.id,
-        photoUrl: c.photo_url,
+        photoUrl: signedUrlMap.get(c.photo_url) || c.photo_url,
+        selfieUrl: c.selfie_url ? (signedUrlMap.get(c.selfie_url) || c.selfie_url) : null,
         caption: c.caption,
         createdAt: c.created_at,
         dayName: dayNames[parseISO(c.created_at).getDay()],
@@ -158,7 +168,7 @@ export const useWeeklyRecap = () => {
       // Get user's checkins for last week
       const { data: checkins } = await supabase
         .from('checkins')
-        .select('id, created_at, group_id, photo_url, caption')
+        .select('id, created_at, group_id, photo_url, selfie_url, caption')
         .eq('user_id', user.id)
         .gte('created_at', lastWeekStart.toISOString())
         .lte('created_at', lastWeekEnd.toISOString());
@@ -295,7 +305,7 @@ export const useWeeklyRecap = () => {
         earliestPostDay = withTimes[0].day;
       }
 
-      // Build week photos from checkins with group names
+      // Build week photos with signed URLs
       const checkinGroupIds = [...new Set(checkins?.map(c => c.group_id) || [])];
       const { data: checkinGroups } = checkinGroupIds.length > 0
         ? await supabase.from('groups').select('id, name').in('id', checkinGroupIds)
@@ -303,9 +313,18 @@ export const useWeeklyRecap = () => {
       const groupNameMap: Record<string, string> = {};
       checkinGroups?.forEach(g => { groupNameMap[g.id] = g.name; });
 
+      // Collect all photo paths for signed URLs
+      const allPaths: string[] = [];
+      checkins?.forEach(c => {
+        if (c.photo_url) allPaths.push(c.photo_url);
+        if (c.selfie_url) allPaths.push(c.selfie_url);
+      });
+      const signedUrlMap = await getSignedPhotoUrls(allPaths);
+
       const weekPhotosData: WeekPhoto[] = checkins?.map(c => ({
         id: c.id,
-        photoUrl: c.photo_url,
+        photoUrl: signedUrlMap.get(c.photo_url) || c.photo_url,
+        selfieUrl: c.selfie_url ? (signedUrlMap.get(c.selfie_url) || c.selfie_url) : null,
         caption: c.caption,
         createdAt: c.created_at,
         dayName: dayNames[parseISO(c.created_at).getDay() === 0 ? 6 : parseISO(c.created_at).getDay() - 1],
