@@ -329,6 +329,14 @@ const Profile = () => {
                 </div>
 
 
+                {/* Install App */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    General
+                  </h3>
+                  <InstallAppSection />
+                </div>
+
                 {/* Appearance */}
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
