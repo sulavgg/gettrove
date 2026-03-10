@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Loader2, LogOut, Camera, Mail, AlertTriangle, CheckCircle, School } from 'lucide-react';
+import { InstallAppSection } from '@/components/pwa/InstallAppSection';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -327,6 +328,14 @@ const Profile = () => {
                   </Card>
                 </div>
 
+
+                {/* Install App */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    General
+                  </h3>
+                  <InstallAppSection />
+                </div>
 
                 {/* Appearance */}
                 <div className="mb-6">
