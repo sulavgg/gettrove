@@ -168,7 +168,7 @@ export const useWeeklyRecap = () => {
       // Get user's checkins for last week
       const { data: checkins } = await supabase
         .from('checkins')
-        .select('id, created_at, group_id, photo_url, caption')
+        .select('id, created_at, group_id, photo_url, selfie_url, caption')
         .eq('user_id', user.id)
         .gte('created_at', lastWeekStart.toISOString())
         .lte('created_at', lastWeekEnd.toISOString());
