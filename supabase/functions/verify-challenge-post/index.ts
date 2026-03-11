@@ -249,10 +249,10 @@ Analyze the attached image and determine if it meets the criteria. Respond ONLY 
         }
       } catch (aiError) {
         console.error('AI verification error:', aiError)
-        // Fallback: give benefit of the doubt
-        verified = true
-        points = def.multiplier
-        reason = 'Auto-approved (AI verification temporarily unavailable)'
+        // Fail safely — do not auto-approve on errors
+        verified = false
+        points = 0
+        reason = 'AI verification temporarily unavailable — please try again'
       }
     }
 

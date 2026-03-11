@@ -14,10 +14,33 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required environment variables");
     }
 
-    const { email, redirectTo } = await req.json();
+    // Verify the authenticated user owns the email they're requesting verification for
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabaseAuth = createClient(SUPABASE_URL!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const { redirectTo } = await req.json();
+    const email = user.email;
 
     if (!email) {
-      throw new Error("Email is required");
+      throw new Error("No email associated with authenticated user");
     }
 
     // Generate a magic link to confirm the user's email
