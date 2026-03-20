@@ -251,18 +251,18 @@ const Leaderboard = () => {
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   <div className="bg-card rounded-xl p-4 border border-border">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Avg Streak
+                      Total Points
                     </p>
-                    <p className="text-2xl font-bold text-warning flex items-center gap-1">
-                      🔥 {avgStreak} days
+                    <p className="text-2xl font-bold text-warning tabular-nums">
+                      {totalPoints.toLocaleString()}
                     </p>
                   </div>
                   <div className="bg-card rounded-xl p-4 border border-border">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Total Check-ins
+                      Avg Streak
                     </p>
-                    <p className="text-2xl font-bold text-primary">
-                      {totalCheckins}
+                    <p className="text-2xl font-bold text-primary flex items-center gap-1">
+                      🔥 {avgStreak} days
                     </p>
                   </div>
                 </div>
