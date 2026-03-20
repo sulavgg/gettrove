@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Moon, X, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { useRestDays } from '@/hooks/useRestDays';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface Member {
@@ -43,6 +44,25 @@ export const LeaderboardTab = ({
   const { hasRestedToday, restDaysRemaining, cancelRestDay } = useRestDays(groupId);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [pointsByUser, setPointsByUser] = useState<Map<string, number>>(new Map());
+
+  const fetchPoints = useCallback(async () => {
+    if (!groupId) return;
+    const { data } = await (supabase as any)
+      .from('point_transactions')
+      .select('user_id, points')
+      .eq('group_id', groupId) as { data: { user_id: string; points: number }[] | null };
+
+    const map = new Map<string, number>();
+    (data || []).forEach((t) => {
+      map.set(t.user_id, (map.get(t.user_id) || 0) + t.points);
+    });
+    setPointsByUser(map);
+  }, [groupId]);
+
+  useEffect(() => {
+    fetchPoints();
+  }, [fetchPoints]);
 
   const handleCancelRestDay = async () => {
     setCanceling(true);
@@ -60,7 +80,13 @@ export const LeaderboardTab = ({
     }
   };
 
-  const sortedMembers = [...members].sort((a, b) => b.current_streak - a.current_streak);
+  const sortedMembers = [...members].sort((a, b) => {
+    const ptsA = pointsByUser.get(a.user_id) || 0;
+    const ptsB = pointsByUser.get(b.user_id) || 0;
+    if (ptsB !== ptsA) return ptsB - ptsA;
+    if (b.current_streak !== a.current_streak) return b.current_streak - a.current_streak;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <div className="space-y-4">
@@ -98,6 +124,7 @@ export const LeaderboardTab = ({
           const rank = index + 1;
           const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
           const isCurrentUser = member.user_id === currentUserId;
+          const pts = pointsByUser.get(member.user_id) || 0;
 
           return (
             <div
@@ -133,27 +160,29 @@ export const LeaderboardTab = ({
                   {isCurrentUser && ' (You)'}
                 </p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  {member.posted_today ? (
-                    '✓ Posted today'
-                  ) : member.rested_today ? (
+                  {member.current_streak >= 3 && (
+                    <span className="animate-pulse-fire">🔥</span>
+                  )}
+                  {member.current_streak > 0
+                    ? `${member.current_streak}-day streak`
+                    : 'No streak'}
+                  {member.posted_today && ' · ✓ Today'}
+                  {!member.posted_today && member.rested_today && (
                     <>
-                      <Moon className="w-3 h-3" />
-                      Resting today
+                      {' · '}
+                      <Moon className="w-3 h-3 inline" />
+                      {' Resting'}
                     </>
-                  ) : (
-                    'Waiting...'
                   )}
                 </p>
               </div>
 
-              {/* Streak */}
-              <div className="text-right">
-                <p className="font-bold text-warning flex items-center gap-1">
-                  {member.current_streak > 0 && (
-                    <span className="animate-pulse-fire">🔥</span>
-                  )}
-                  {member.current_streak} days
+              {/* Points */}
+              <div className="text-right flex-shrink-0">
+                <p className="font-black text-lg text-warning tabular-nums">
+                  {pts.toLocaleString()}
                 </p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">pts</p>
               </div>
             </div>
           );

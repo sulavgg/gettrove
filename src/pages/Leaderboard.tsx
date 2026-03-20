@@ -33,6 +33,7 @@ interface LeaderboardEntry {
   photo: string | null;
   current_streak: number;
   total_checkins: number;
+  total_points: number;
   posted_today: boolean;
 }
 
@@ -113,21 +114,30 @@ const Leaderboard = () => {
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      const { data: profiles } = await supabase
-        .rpc('get_group_member_profiles', { p_group_id: selectedGroup });
-
-      const { data: streaks } = await supabase
-        .from('streaks')
-        .select('user_id, current_streak, total_checkins')
-        .eq('group_id', selectedGroup);
-
-      const { data: todayCheckins } = await supabase
-        .from('checkins')
-        .select('user_id')
-        .eq('group_id', selectedGroup)
-        .gte('created_at', todayISO);
+      const [{ data: profiles }, { data: streaks }, { data: todayCheckins }, { data: pointTxns }] = await Promise.all([
+        supabase.rpc('get_group_member_profiles', { p_group_id: selectedGroup }),
+        supabase
+          .from('streaks')
+          .select('user_id, current_streak, total_checkins')
+          .eq('group_id', selectedGroup),
+        supabase
+          .from('checkins')
+          .select('user_id')
+          .eq('group_id', selectedGroup)
+          .gte('created_at', todayISO),
+        supabase
+          .from('point_transactions')
+          .select('user_id, points')
+          .eq('group_id', selectedGroup),
+      ]);
 
       const postedTodayIds = new Set(todayCheckins?.map((c) => c.user_id) || []);
+
+      // Aggregate points per user
+      const pointsByUser = new Map<string, number>();
+      (pointTxns || []).forEach((t) => {
+        pointsByUser.set(t.user_id, (pointsByUser.get(t.user_id) || 0) + t.points);
+      });
 
       const leaderboardData: LeaderboardEntry[] = (profiles || []).map((p) => {
         const streak = streaks?.find((s) => s.user_id === p.user_id);
@@ -137,15 +147,15 @@ const Leaderboard = () => {
           photo: p.profile_photo_url,
           current_streak: streak?.current_streak || 0,
           total_checkins: streak?.total_checkins || 0,
+          total_points: pointsByUser.get(p.user_id) || 0,
           posted_today: postedTodayIds.has(p.user_id),
         };
       });
 
       leaderboardData.sort((a, b) => {
-        if (b.current_streak !== a.current_streak) {
-          return b.current_streak - a.current_streak;
-        }
-        return b.total_checkins - a.total_checkins;
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        if (b.current_streak !== a.current_streak) return b.current_streak - a.current_streak;
+        return a.name.localeCompare(b.name);
       });
 
       setEntries(leaderboardData);
@@ -165,10 +175,10 @@ const Leaderboard = () => {
 
   const selectedGroupData = groups.find((g) => g.id === selectedGroup);
 
+  const totalPoints = entries.reduce((sum, e) => sum + e.total_points, 0);
   const avgStreak = entries.length > 0
     ? Math.round(entries.reduce((sum, e) => sum + e.current_streak, 0) / entries.length)
     : 0;
-  const totalCheckins = entries.reduce((sum, e) => sum + e.total_checkins, 0);
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -241,18 +251,18 @@ const Leaderboard = () => {
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   <div className="bg-card rounded-xl p-4 border border-border">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Avg Streak
+                      Total Points
                     </p>
-                    <p className="text-2xl font-bold text-warning flex items-center gap-1">
-                      🔥 {avgStreak} days
+                    <p className="text-2xl font-bold text-warning tabular-nums">
+                      {totalPoints.toLocaleString()}
                     </p>
                   </div>
                   <div className="bg-card rounded-xl p-4 border border-border">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Total Check-ins
+                      Avg Streak
                     </p>
-                    <p className="text-2xl font-bold text-primary">
-                      {totalCheckins}
+                    <p className="text-2xl font-bold text-primary flex items-center gap-1">
+                      🔥 {avgStreak} days
                     </p>
                   </div>
                 </div>
@@ -294,20 +304,22 @@ const Leaderboard = () => {
                               {entry.name}
                               {isCurrentUser && ' (You)'}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.total_checkins} total check-ins
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              {entry.current_streak >= 3 && (
+                                <span className="animate-pulse-fire">🔥</span>
+                              )}
+                              {entry.current_streak > 0
+                                ? `${entry.current_streak}-day streak`
+                                : 'No streak'}
                             </p>
                           </div>
 
                           <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-warning flex items-center gap-1">
-                              {entry.current_streak > 0 && (
-                                <span className="animate-pulse-fire">🔥</span>
-                              )}
-                              {entry.current_streak} days
+                            <p className="font-black text-lg text-warning tabular-nums">
+                              {entry.total_points.toLocaleString()}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.posted_today ? '✓ Today' : '⏰ Pending'}
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                              pts
                             </p>
                           </div>
                         </div>
