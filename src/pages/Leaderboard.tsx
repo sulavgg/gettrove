@@ -114,21 +114,30 @@ const Leaderboard = () => {
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      const { data: profiles } = await supabase
-        .rpc('get_group_member_profiles', { p_group_id: selectedGroup });
-
-      const { data: streaks } = await supabase
-        .from('streaks')
-        .select('user_id, current_streak, total_checkins')
-        .eq('group_id', selectedGroup);
-
-      const { data: todayCheckins } = await supabase
-        .from('checkins')
-        .select('user_id')
-        .eq('group_id', selectedGroup)
-        .gte('created_at', todayISO);
+      const [{ data: profiles }, { data: streaks }, { data: todayCheckins }, { data: pointTxns }] = await Promise.all([
+        supabase.rpc('get_group_member_profiles', { p_group_id: selectedGroup }),
+        supabase
+          .from('streaks')
+          .select('user_id, current_streak, total_checkins')
+          .eq('group_id', selectedGroup),
+        supabase
+          .from('checkins')
+          .select('user_id')
+          .eq('group_id', selectedGroup)
+          .gte('created_at', todayISO),
+        supabase
+          .from('point_transactions')
+          .select('user_id, points')
+          .eq('group_id', selectedGroup),
+      ]);
 
       const postedTodayIds = new Set(todayCheckins?.map((c) => c.user_id) || []);
+
+      // Aggregate points per user
+      const pointsByUser = new Map<string, number>();
+      (pointTxns || []).forEach((t) => {
+        pointsByUser.set(t.user_id, (pointsByUser.get(t.user_id) || 0) + t.points);
+      });
 
       const leaderboardData: LeaderboardEntry[] = (profiles || []).map((p) => {
         const streak = streaks?.find((s) => s.user_id === p.user_id);
@@ -138,15 +147,15 @@ const Leaderboard = () => {
           photo: p.profile_photo_url,
           current_streak: streak?.current_streak || 0,
           total_checkins: streak?.total_checkins || 0,
+          total_points: pointsByUser.get(p.user_id) || 0,
           posted_today: postedTodayIds.has(p.user_id),
         };
       });
 
       leaderboardData.sort((a, b) => {
-        if (b.current_streak !== a.current_streak) {
-          return b.current_streak - a.current_streak;
-        }
-        return b.total_checkins - a.total_checkins;
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        if (b.current_streak !== a.current_streak) return b.current_streak - a.current_streak;
+        return a.name.localeCompare(b.name);
       });
 
       setEntries(leaderboardData);
