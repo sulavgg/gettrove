@@ -33,6 +33,7 @@ interface LeaderboardEntry {
   photo: string | null;
   current_streak: number;
   total_checkins: number;
+  total_points: number;
   posted_today: boolean;
 }
 
