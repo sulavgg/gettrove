@@ -175,10 +175,10 @@ const Leaderboard = () => {
 
   const selectedGroupData = groups.find((g) => g.id === selectedGroup);
 
+  const totalPoints = entries.reduce((sum, e) => sum + e.total_points, 0);
   const avgStreak = entries.length > 0
     ? Math.round(entries.reduce((sum, e) => sum + e.current_streak, 0) / entries.length)
     : 0;
-  const totalCheckins = entries.reduce((sum, e) => sum + e.total_checkins, 0);
 
   return (
     <div className="min-h-screen bg-background pb-32">
