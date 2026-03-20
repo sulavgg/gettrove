@@ -304,20 +304,22 @@ const Leaderboard = () => {
                               {entry.name}
                               {isCurrentUser && ' (You)'}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.total_checkins} total check-ins
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              {entry.current_streak >= 3 && (
+                                <span className="animate-pulse-fire">🔥</span>
+                              )}
+                              {entry.current_streak > 0
+                                ? `${entry.current_streak}-day streak`
+                                : 'No streak'}
                             </p>
                           </div>
 
                           <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-warning flex items-center gap-1">
-                              {entry.current_streak > 0 && (
-                                <span className="animate-pulse-fire">🔥</span>
-                              )}
-                              {entry.current_streak} days
+                            <p className="font-black text-lg text-warning tabular-nums">
+                              {entry.total_points.toLocaleString()}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.posted_today ? '✓ Today' : '⏰ Pending'}
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                              pts
                             </p>
                           </div>
                         </div>
