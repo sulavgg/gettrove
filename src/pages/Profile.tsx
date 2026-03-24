@@ -197,15 +197,15 @@ const Profile = () => {
                     <h2 className="text-xl font-bold text-foreground mb-1">
                       {profile?.name || 'Loading...'}
                     </h2>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">{profile?.email}</span>
+                    <div className="flex items-center gap-2 text-sm min-w-0 max-w-full">
+                      <span className="text-muted-foreground truncate min-w-0">{profile?.email}</span>
                       {isEmailVerified ? (
-                        <span className="flex items-center gap-1 text-success text-xs">
+                        <span className="flex items-center gap-1 text-success text-xs flex-shrink-0">
                           <CheckCircle className="w-3 h-3" strokeWidth={1.5} />
                           Verified
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-warning text-xs">
+                        <span className="flex items-center gap-1 text-warning text-xs flex-shrink-0">
                           <AlertTriangle className="w-3 h-3" strokeWidth={1.5} />
                           Unverified
                         </span>
@@ -245,7 +245,7 @@ const Profile = () => {
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Active Streaks
                     </p>
-                    <p className="text-2xl font-bold text-warning flex items-center gap-1">
+                    <p className="text-xl font-bold text-warning flex items-center gap-1">
                       🔥 {stats.activeStreaks}
                     </p>
                   </Card>
@@ -253,7 +253,7 @@ const Profile = () => {
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Total Check-ins
                     </p>
-                    <p className="text-2xl font-bold text-primary">
+                    <p className="text-xl font-bold text-primary">
                       ✅ {stats.totalCheckins}
                     </p>
                   </Card>
@@ -261,15 +261,16 @@ const Profile = () => {
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Longest Streak
                     </p>
-                    <p className="text-2xl font-bold text-success">
-                      🏆 {stats.longestStreak} days
-                    </p>
+                    <div className="flex items-baseline gap-1 min-w-0">
+                      <span className="text-xl font-bold text-success">🏆 {stats.longestStreak}</span>
+                      <span className="text-sm text-muted-foreground">days</span>
+                    </div>
                   </Card>
                   <Card className="p-4 bg-card border border-white/[0.08]">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                       Groups Joined
                     </p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-xl font-bold text-foreground">
                       👥 {stats.groupsJoined}
                     </p>
                   </Card>

@@ -272,10 +272,10 @@ const GroupDetail = () => {
             <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
           </button>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2">
-              <span>{habit.emoji}</span>
-              <h1 className="font-bold text-foreground">{group?.name || 'Loading...'}</h1>
+          <div className="text-center min-w-0 flex-1 px-2">
+            <div className="flex items-center justify-center gap-1.5 min-w-0">
+              <span className="flex-shrink-0">{habit.emoji}</span>
+              <h1 className="font-bold text-foreground truncate">{group?.name || 'Loading...'}</h1>
             </div>
             <p className="text-xs text-muted-foreground">
               {postedCount}/{members.length} posted today • {percentage}%

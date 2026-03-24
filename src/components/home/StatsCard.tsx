@@ -41,12 +41,12 @@ export const StatsCard = ({
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-4 relative z-10">
+        <div className="grid grid-cols-3 gap-2 relative z-10">
           {/* Active Streaks */}
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <span className="text-2xl animate-pulse-fire">🔥</span>
-              <span className="text-3xl font-black text-foreground">{activeStreaks}</span>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <span className="text-xl animate-pulse-fire">🔥</span>
+              <span className="text-2xl font-black text-foreground">{activeStreaks}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-tight">
               Active<br />Streaks
@@ -55,11 +55,10 @@ export const StatsCard = ({
 
           {/* Posted Today */}
           <div className="text-center border-x border-border/50">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <CheckCircle2 className="w-5 h-5 text-success" strokeWidth={1.5} />
-              <span className="text-3xl font-black text-foreground">
-                {postedToday}
-                <span className="text-lg text-muted-foreground">/{totalGroups}</span>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" strokeWidth={1.5} />
+              <span className="text-2xl font-black text-foreground tabular-nums">
+                {postedToday}<span className="text-sm text-muted-foreground">/{totalGroups}</span>
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-tight">
@@ -69,9 +68,9 @@ export const StatsCard = ({
 
           {/* Longest Streak */}
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <TrendingUp className="w-5 h-5 text-warning" strokeWidth={1.5} />
-              <span className="text-3xl font-black text-foreground">{longestStreak}</span>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <TrendingUp className="w-4 h-4 text-warning flex-shrink-0" strokeWidth={1.5} />
+              <span className="text-2xl font-black text-foreground tabular-nums">{longestStreak}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-tight">
               Longest<br />Streak

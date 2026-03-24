@@ -109,20 +109,20 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
   };
 
   const renderDayCircles = () => (
-    <div className="grid grid-cols-7 gap-2 mt-6">
+    <div className="flex justify-between w-full mt-6 px-1">
       {data.dayStatuses.map((day, idx) => (
-        <div key={idx} className="flex flex-col items-center gap-2">
+        <div key={idx} className="flex flex-col items-center gap-1.5">
           <div
             className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all",
+              "w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all",
               day.posted
                 ? "bg-primary/20 border-2 border-primary"
                 : "bg-muted/30 border-2 border-muted"
             )}
           >
-            {day.posted ? '✅' : '⭕'}
+            {day.posted ? '✓' : '·'}
           </div>
-          <span className="text-xs text-muted-foreground">{day.day.slice(0, 3)}</span>
+          <span className="text-[10px] text-muted-foreground">{day.day.slice(0, 3)}</span>
         </div>
       ))}
     </div>
@@ -427,7 +427,7 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
     </div>,
 
     // Slide 6: Share
-    <div key="share" className="flex flex-col items-center min-h-full px-4 py-10 overflow-y-auto">
+    <div key="share" className="flex flex-col items-center w-full px-4 py-10 overflow-y-auto overscroll-contain">
       <motion.p
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

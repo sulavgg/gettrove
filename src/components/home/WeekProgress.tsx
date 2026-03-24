@@ -29,7 +29,7 @@ export const WeekProgress = ({ days, className }: WeekProgressProps) => {
                 : 'bg-muted/50 text-muted-foreground/50'
             )}
           >
-            {day.posted ? '✓' : day.rested ? '😴' : day.day[0]}
+            {day.posted ? '✓' : day.rested ? '–' : day.day[0]}
           </div>
         </div>
       ))}

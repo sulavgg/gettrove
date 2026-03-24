@@ -130,9 +130,9 @@ export const EnhancedGroupCard = ({
         {/* Middle Row: Last Check-in & Group Activity */}
         <div className="flex items-center gap-4 mb-3 text-sm">
           {isLocked ? (
-            <div className="flex items-center gap-1.5 text-warning">
-              <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>🔒 {memberCount}/{MIN_GROUP_MEMBERS} members — Invite {MIN_GROUP_MEMBERS - memberCount} more</span>
+            <div className="flex items-center gap-1.5 text-warning min-w-0">
+              <Lock className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
+              <span className="truncate">Invite {MIN_GROUP_MEMBERS - memberCount} more to unlock ({memberCount}/{MIN_GROUP_MEMBERS})</span>
             </div>
           ) : (
             <>

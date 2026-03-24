@@ -117,7 +117,7 @@ export const TubelightNavbar = () => {
                   />
                 </motion.div>
                 <span
-                  className={`text-[10px] font-medium uppercase tracking-wider transition-colors duration-200 ${
+                  className={`text-[10px] font-medium uppercase tracking-wide transition-colors duration-200 ${
                     isActive ? 'text-gold' : 'text-muted-foreground'
                   }`}
                 >

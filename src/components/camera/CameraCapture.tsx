@@ -296,12 +296,12 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
           <X className="w-6 h-6" />
         </button>
 
-        <div className="flex-1 flex justify-center">
-          <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
-            <p className="text-white text-sm font-semibold">
+        <div className="flex-1 flex justify-center min-w-0 px-2">
+          <div className="bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full max-w-full">
+            <p className="text-white text-xs font-semibold whitespace-nowrap">
               {cameraStep === 'activity'
-                ? '📸 Step 1: Show your habit in action'
-                : '🤳 Step 2: Take a selfie to verify'}
+                ? '📸 Step 1: Activity photo'
+                : '🤳 Step 2: Selfie to verify'}
             </p>
           </div>
         </div>
