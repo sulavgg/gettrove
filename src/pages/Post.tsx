@@ -12,6 +12,7 @@ import { PostGroupSelection } from '@/components/post/PostGroupSelection';
 import { MIN_GROUP_MEMBERS } from '@/hooks/useGroupUnlock';
 import { format } from 'date-fns';
 import { calculatePostPoints, type PointBreakdown } from '@/lib/points';
+import { getUtcDayStartISO } from '@/lib/date';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface GroupOption {
@@ -46,6 +47,8 @@ const Post = () => {
   const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(false);
+  const resendLastSentAt = useRef<number>(0);
   const [lockedDialogGroup, setLockedDialogGroup] = useState<GroupOption | null>(null);
   const [shareToCampus, setShareToCampus] = useState(true);
 
@@ -58,11 +61,19 @@ const Post = () => {
   }, [activityPreview, selfiePreview]);
 
   const handleResendVerification = async () => {
+    const COOLDOWN_MS = 60_000;
+    if (Date.now() - resendLastSentAt.current < COOLDOWN_MS) {
+      toast.error('Please wait 60 seconds before requesting another email.');
+      return;
+    }
     setResending(true);
     const { error } = await resendVerificationEmail();
     if (error) {
       toast.error(error.message);
     } else {
+      resendLastSentAt.current = Date.now();
+      setResendCooldown(true);
+      setTimeout(() => setResendCooldown(false), COOLDOWN_MS);
       toast.success('Verification email sent!');
     }
     setResending(false);
@@ -89,9 +100,7 @@ const Post = () => {
         .select('*')
         .in('id', groupIds);
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayISO = today.toISOString();
+      const todayISO = getUtcDayStartISO();
 
       const { data: todayCheckins } = await supabase
         .from('checkins')
@@ -300,30 +309,37 @@ const Post = () => {
         if (streakError) console.warn('Streak update warning:', streakError);
 
         // Award posting points server-side
-        try {
-          const { data: pointsResult } = await supabase.rpc('award_post_points', {
-            p_checkin_id: checkinData?.id,
-            p_group_id: groupId,
-          }) as { data: any };
+        const { data: pointsResult, error: pointsError } = await supabase.rpc('award_post_points', {
+          p_checkin_id: checkinData?.id,
+          p_group_id: groupId,
+        }) as { data: any; error: any };
 
-          if (pointsResult?.success) {
-            const postDate = captureTimestamp ? new Date(captureTimestamp) : new Date();
-            const breakdown = calculatePostPoints(postDate, pointsResult.streak || 0);
-            setEarnedPoints(breakdown);
-          }
-        } catch (ptErr) {
-          console.warn('Points award error:', ptErr);
+        if (pointsError) {
+          console.error('Points award error:', pointsError);
+          toast.warning('Posted! Points may take a moment to update. Refresh if they don\'t appear.');
+        } else if (pointsResult?.success) {
+          const postDate = captureTimestamp ? new Date(captureTimestamp) : new Date();
+          const breakdown = calculatePostPoints(postDate, pointsResult.streak || 0);
+          setEarnedPoints(breakdown);
         }
 
         if (checkinData?.id) {
+          const verifyToastId = toast.loading('Checking challenges...', { duration: 8000 });
           supabase.functions.invoke('verify-challenge-post', {
             body: { checkin_id: checkinData.id, group_id: groupId, photo_url: activityUrl },
           }).then(({ data: verifyData, error: verifyError }) => {
-            if (verifyError) console.warn('Challenge verification warning:', verifyError);
-            else if (verifyData?.verified) {
-              toast.success(`⚡ Challenge bonus: +${verifyData.points} pts!`, { duration: 3000 });
+            toast.dismiss(verifyToastId);
+            if (verifyError) {
+              toast.warning('Challenge check failed — your post is saved but bonus points may be missing.');
+            } else if (verifyData?.verified) {
+              toast.success(`Challenge bonus: +${verifyData.points} pts!`, { duration: 3000 });
+            } else {
+              toast.dismiss(verifyToastId);
             }
-          }).catch((err) => console.warn('Challenge verification failed:', err));
+          }).catch((err) => {
+            console.warn('Challenge verification failed:', err);
+            toast.dismiss(verifyToastId);
+          });
         }
       }
 
@@ -381,8 +397,8 @@ const Post = () => {
             You need to verify your email address before posting check-ins. Check your inbox at{' '}
             <strong>{profile?.email}</strong> for the verification link.
           </p>
-          <Button onClick={handleResendVerification} disabled={resending} className="w-full h-12 bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
-            {resending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Resend Verification Email'}
+          <Button onClick={handleResendVerification} disabled={resending || resendCooldown} className="w-full h-12 bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
+            {resending ? <Loader2 className="w-5 h-5 animate-spin" /> : resendCooldown ? 'Email Sent — Wait 60s' : 'Resend Verification Email'}
           </Button>
         </div>
       </div>

@@ -18,6 +18,7 @@ import { WeeklyRecapSlides } from '@/components/recap/WeeklyRecapSlides';
 import { toast } from 'sonner';
 import { triggerHaptic } from '@/hooks/useHaptic';
 import { getSignedPhotoUrls } from '@/lib/storage';
+import { getUtcDayStartISO, getTodayUTC } from '@/lib/date';
 
 // New home components
 import { StatsCard } from '@/components/home/StatsCard';
@@ -123,19 +124,19 @@ const Home = () => {
     restDates: string[]
   ): DayStatus[] => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
+    const todayStr = getTodayUTC();
+    const todayUtc = new Date(`${todayStr}T00:00:00.000Z`);
+    const startOfWeek = new Date(todayUtc);
+    startOfWeek.setUTCDate(todayUtc.getUTCDate() - todayUtc.getUTCDay());
 
     return days.map((day, index) => {
       const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + index);
+      date.setUTCDate(startOfWeek.getUTCDate() + index);
       const dateStr = date.toISOString().split('T')[0];
-      const isToday = date.toDateString() === today.toDateString();
+      const isToday = dateStr === todayStr;
       const posted = checkinDates.some(d => d.startsWith(dateStr));
       const rested = restDates.includes(dateStr);
-      
+
       return { day, posted, isToday, rested };
     });
   }, []);
@@ -184,15 +185,14 @@ const Home = () => {
 
       if (groupsError) throw groupsError;
 
-      // Get today's date in user's timezone
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayISO = today.toISOString();
-      const todayDate = today.toISOString().split('T')[0];
+      // Use UTC day boundaries so check-ins aren't missed for users in UTC- timezones
+      const todayISO = getUtcDayStartISO();
+      const todayDate = getTodayUTC();
 
-      // Get start of week
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay());
+      // Get start of week (UTC Sunday)
+      const todayUtc = new Date(todayISO);
+      const startOfWeek = new Date(todayUtc);
+      startOfWeek.setUTCDate(todayUtc.getUTCDate() - todayUtc.getUTCDay());
       const startOfWeekISO = startOfWeek.toISOString();
 
       // Get member counts and today's checkins

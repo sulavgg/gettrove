@@ -51,11 +51,15 @@ const Auth = () => {
         else {
           // Send branded verification email via Resend
           try {
-            await supabase.functions.invoke('send-verification-email', {
+            const { error: emailError } = await supabase.functions.invoke('send-verification-email', {
               body: { email: email.trim(), redirectTo: window.location.origin },
             });
+            if (emailError) throw emailError;
           } catch (e) {
-            console.warn('Custom verification email failed, falling back to default:', e);
+            // Default Supabase verification email is still sent as fallback
+            toast.warning('Check your email to confirm your account. (Custom email failed — check your spam folder.)');
+            setLoading(false);
+            return;
           }
           toast.success('Check your email to confirm your account!');
         }

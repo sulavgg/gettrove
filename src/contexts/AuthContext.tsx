@@ -46,18 +46,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check if email is verified
   const isEmailVerified = user?.email_confirmed_at != null;
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+  const fetchProfile = async (userId: string, retries = 3): Promise<Profile | null> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
+      if (data) return data as Profile;
+
+      // PGRST116 = no rows found — profile trigger may not have run yet on first signup
+      const notFound = error?.code === 'PGRST116';
+      if (notFound && attempt < retries) {
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+        continue;
+      }
+
+      if (error) console.error('Error fetching profile:', error);
       return null;
     }
-    return data as Profile;
+    return null;
   };
 
   const refreshProfile = async () => {
@@ -68,39 +77,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener first
+    // Initialize from the existing session first, then listen for changes.
+    // This avoids the race condition where both getSession() and onAuthStateChange
+    // fire on mount and trigger duplicate profile fetches that overwrite each other.
+    let initialized = false;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Skip the initial INITIAL_SESSION event — we handle that via getSession() below
+        // so we have one clear initialization path.
+        if (!initialized) return;
+
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (session?.user) {
-          // Use setTimeout to avoid potential race conditions
-          setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            setLoading(false);
-          }, 0);
-        } else {
+        if (event === 'SIGNED_OUT') {
           setProfile(null);
           setLoading(false);
+          return;
         }
+
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Single initialization path: read the existing session, then mark initialized
+    // so the listener above takes over for all subsequent auth events.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id).then((profileData) => {
-          setProfile(profileData);
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
       }
+
+      setLoading(false);
+      initialized = true;
     });
 
     return () => subscription.unsubscribe();
