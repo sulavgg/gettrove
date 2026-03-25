@@ -76,11 +76,12 @@ const Home = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   
-  const { 
-    latestRecap, 
-    hasUnviewedRecap, 
-    markAsViewed, 
-    generateRecapLocally 
+  const {
+    latestRecap,
+    hasUnviewedRecap,
+    markAsViewed,
+    generateRecapLocally,
+    saveShareableImageUrl,
   } = useWeeklyRecap();
 
   // Calculate hours left in the day
@@ -395,27 +396,6 @@ const Home = () => {
     }
   };
 
-  const handleShareRecap = async () => {
-    if (!latestRecap) return;
-    
-    const shareText = `My TROVE week: ${latestRecap.daysPosted}/7 days posted, ${latestRecap.currentStreak}-day streak! 🔥`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'My TROVE Week',
-          text: shareText,
-          url: window.location.origin,
-        });
-      } catch {
-        console.log('Share cancelled');
-      }
-    } else {
-      await navigator.clipboard.writeText(shareText);
-      toast.success('Copied to clipboard!');
-    }
-  };
-
   const hasUnpostedGroups = groups.some((g) => !g.posted_today && !g.rested_today);
   const allGroupsLocked = groups.length > 0 && groups.every(g => g.is_locked);
   const hasAnyUnlockedUnposted = groups.some(g => !g.is_locked && !g.posted_today && !g.rested_today);
@@ -425,8 +405,9 @@ const Home = () => {
     return (
       <WeeklyRecapSlides
         data={latestRecap}
+        userName={profile?.name || 'Trove User'}
         onClose={() => setShowRecapSlides(false)}
-        onShare={handleShareRecap}
+        onSaveShareUrl={saveShareableImageUrl}
       />
     );
   }

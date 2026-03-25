@@ -101,9 +101,33 @@ export const useWeeklyRecap = () => {
     }
   };
 
+  const saveShareableImageUrl = useCallback(async (recapId: string, blob: Blob) => {
+    if (!user) return;
+    try {
+      const path = `recap-shares/${user.id}/${recapId}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from('checkin-photos')
+        .upload(path, blob, { contentType: 'image/png', upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('checkin-photos')
+        .getPublicUrl(path);
+
+      if (urlData?.publicUrl) {
+        await supabase
+          .from('weekly_recaps')
+          .update({ shareable_image_url: urlData.publicUrl })
+          .eq('id', recapId);
+      }
+    } catch (err) {
+      console.error('Error saving shareable image URL:', err);
+    }
+  }, [user]);
+
   const fetchRecaps = useCallback(async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('weekly_recaps')
@@ -114,21 +138,24 @@ export const useWeeklyRecap = () => {
 
       if (error) throw error;
 
-      // Map recaps and fetch photos for each
+      // Compute streak_change by diffing adjacent recaps
+      const rows = data || [];
       const mappedRecaps = await Promise.all(
-        (data || []).map(async (db) => {
+        rows.map(async (db, idx) => {
           const baseRecap = mapDbToRecapData(db);
+          // Previous week's recap is the next element (older)
+          const prevStreak = rows[idx + 1]?.current_streak ?? null;
+          const streakChange = prevStreak !== null ? db.current_streak - prevStreak : 0;
           const weekPhotos = await fetchWeekPhotos(db.week_start, db.week_end);
-          return { ...baseRecap, weekPhotos };
+          return { ...baseRecap, streakChange, weekPhotos };
         })
       );
-      
+
       setRecaps(mappedRecaps);
-      
+
       if (mappedRecaps.length > 0) {
         setLatestRecap(mappedRecaps[0]);
-        // Check if latest recap is unviewed
-        const latestDb = data?.[0];
+        const latestDb = rows[0];
         setHasUnviewedRecap(latestDb && !latestDb.viewed_at);
       }
     } catch (error) {
@@ -192,6 +219,16 @@ export const useWeeklyRecap = () => {
 
       const currentStreak = streaks?.[0]?.current_streak || 0;
       const longestStreakMonth = Math.max(...(streaks?.map(s => s.longest_streak) || [0]));
+
+      // Compute streak_change vs. last stored weekly recap
+      const prevWeekStart = format(subWeeks(lastWeekStart, 1), 'yyyy-MM-dd');
+      const { data: prevRecap } = await supabase
+        .from('weekly_recaps')
+        .select('current_streak')
+        .eq('user_id', user.id)
+        .eq('week_start', prevWeekStart)
+        .maybeSingle();
+      const streakChange = prevRecap ? currentStreak - prevRecap.current_streak : 0;
 
       // Get group info
       const { data: memberships } = await supabase
@@ -340,7 +377,7 @@ export const useWeeklyRecap = () => {
         dayStatuses,
         weekPhotos: weekPhotosData,
         currentStreak,
-        streakChange: 0,
+        streakChange,
         longestStreakMonth,
         groupRank,
         groupTotal,
@@ -374,6 +411,7 @@ export const useWeeklyRecap = () => {
     hasUnviewedRecap,
     markAsViewed,
     generateRecapLocally,
+    saveShareableImageUrl,
     refetch: fetchRecaps,
   };
 };

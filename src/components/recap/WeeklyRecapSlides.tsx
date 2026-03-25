@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Share2, Download, Instagram } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { X, ChevronLeft, ChevronRight, Share2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { RecapShareCard } from './RecapShareCard';
 
 interface DayStatus {
   day: string;
@@ -50,14 +53,17 @@ export interface RecapData {
 
 interface WeeklyRecapSlidesProps {
   data: RecapData;
+  userName: string;
   onClose: () => void;
-  onShare: () => void;
+  onSaveShareUrl?: (recapId: string, blob: Blob) => Promise<void>;
 }
 
-export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesProps) => {
+export const WeeklyRecapSlides = ({ data, userName, onClose, onSaveShareUrl }: WeeklyRecapSlidesProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   const hasPhotos = data.weekPhotos && data.weekPhotos.length > 0;
   const TOTAL_SLIDES = hasPhotos ? 7 : 6;
@@ -81,6 +87,96 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
   const prevSlide = () => {
     if (currentSlide > 0) {
       setCurrentSlide(prev => prev - 1);
+    }
+  };
+
+  const handleExportAndShare = async () => {
+    if (!shareCardRef.current || exporting) return;
+    setExporting(true);
+
+    try {
+      // Wait for fonts before capturing
+      await document.fonts.ready;
+
+      const canvas = await html2canvas(shareCardRef.current, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#0D0D0D',
+        scale: 2,
+        logging: false,
+      });
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/png')
+      );
+      if (!blob) throw new Error('Failed to generate image');
+
+      const file = new File([blob], 'trove-week.png', { type: 'image/png' });
+
+      // Persist the share URL for this recap
+      if (onSaveShareUrl && !data.id.startsWith('local-')) {
+        onSaveShareUrl(data.id, blob).catch(() => {/* non-critical */});
+      }
+
+      // Try Web Share API with image file (mobile)
+      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'My TROVE Week',
+          text: `${data.daysPosted}/7 days · ${data.currentStreak}-day streak 🔥`,
+        });
+        return;
+      }
+
+      // Web Share API text-only fallback
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My TROVE Week',
+          text: `${data.daysPosted}/7 days · ${data.currentStreak}-day streak 🔥`,
+          url: window.location.origin,
+        });
+        return;
+      }
+
+      // Desktop: download the image
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = 'trove-week.png';
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+      toast.success('Image downloaded!');
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        toast.error('Could not share. Try downloading instead.');
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!shareCardRef.current || exporting) return;
+    setExporting(true);
+    try {
+      await document.fonts.ready;
+      const canvas = await html2canvas(shareCardRef.current, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#0D0D0D',
+        scale: 2,
+        logging: false,
+      });
+      const objectUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = 'trove-week.png';
+      a.click();
+      toast.success('Image saved!');
+    } catch {
+      toast.error('Download failed.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -427,156 +523,49 @@ export const WeeklyRecapSlides = ({ data, onClose, onShare }: WeeklyRecapSlidesP
     </div>,
 
     // Slide 6: Share
-    <div key="share" className="flex flex-col items-center w-full px-4 py-10 overflow-y-auto overscroll-contain">
+    <div key="share" className="flex flex-col items-center w-full px-4 py-8 overflow-y-auto overscroll-contain">
       <motion.p
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-primary font-bold tracking-wider uppercase mb-4 text-sm"
+        className="text-primary font-bold tracking-wider uppercase mb-5 text-sm"
       >
         Share Your Week
       </motion.p>
-      
-      {/* Shareable card — photo-forward design */}
-      <motion.div
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.15 }}
-        className="w-full max-w-sm bg-gradient-to-br from-card via-card to-background rounded-3xl border border-border overflow-hidden shadow-lg mb-6"
-      >
-        {/* Photo collage section */}
-        {hasPhotos && (
-          <div className="relative">
-            <div className={cn(
-              "w-full",
-              data.weekPhotos.length === 1 
-                ? "" 
-                : data.weekPhotos.length <= 2 
-                  ? "grid grid-cols-2" 
-                  : data.weekPhotos.length <= 4 
-                    ? "grid grid-cols-2" 
-                    : "grid grid-cols-3"
-            )}>
-              {data.weekPhotos.slice(0, 6).map((photo, idx) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.05 * idx + 0.2 }}
-                  className={cn(
-                    "relative overflow-hidden bg-secondary",
-                    data.weekPhotos.length === 1 ? "aspect-[4/3]" : "aspect-square"
-                  )}
-                >
-                  {photo.selfieUrl ? (
-                    <div className="w-full h-full relative">
-                      <img
-                        src={photo.photoUrl}
-                        alt={`Activity on ${photo.dayName}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-1 right-1 w-[28%] aspect-square rounded-md overflow-hidden border-2 border-background shadow-lg">
-                        <img
-                          src={photo.selfieUrl}
-                          alt={`Selfie on ${photo.dayName}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={photo.photoUrl}
-                      alt={`Check-in on ${photo.dayName}`}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2">
-                    <p className="text-white text-[10px] font-bold uppercase tracking-wide">
-                      {photo.dayName}
-                    </p>
-                    {photo.groupName && (
-                      <p className="text-white/70 text-[9px]">{photo.groupName}</p>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            {data.weekPhotos.length > 6 && (
-              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded-full">
-                +{data.weekPhotos.length - 6}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Stats section */}
-        <div className="p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground tracking-wide uppercase">My TROVE Week</p>
-              <p className="text-xs text-muted-foreground">{data.weekRange}</p>
-            </div>
-            <span className="text-2xl">🔥</span>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <p className="text-4xl font-black text-foreground">
-              {data.daysPosted}<span className="text-xl text-muted-foreground">/7</span>
-            </p>
-            <p className="text-lg font-bold text-primary">
-              {data.currentStreak}-day streak
-            </p>
-          </div>
-          {/* Day dots */}
-          <div className="flex gap-1.5">
-            {data.dayStatuses.map((day, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-1">
-                <div className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-xs",
-                  day.posted 
-                    ? "bg-primary/20 border-2 border-primary text-primary" 
-                    : "bg-muted/30 border border-muted text-muted-foreground"
-                )}>
-                  {day.posted ? '✓' : '·'}
-                </div>
-                <span className="text-[9px] text-muted-foreground">{day.day.slice(0, 2)}</span>
-              </div>
-            ))}
-          </div>
-          {data.groupRank && data.groupTotal && (
-            <p className="text-sm text-muted-foreground">
-              Ranked <span className="font-bold text-foreground">#{data.groupRank}</span> of {data.groupTotal} in group
-            </p>
-          )}
-        </div>
+      {/* The exportable share card */}
+      <motion.div
+        initial={{ scale: 0.88, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.12, type: 'spring', stiffness: 280, damping: 24 }}
+        className="mb-6 rounded-3xl overflow-hidden shadow-2xl"
+        style={{ maxWidth: 390, width: '100%' }}
+      >
+        <RecapShareCard ref={shareCardRef} data={data} userName={userName} />
       </motion.div>
 
+      {/* Action buttons */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.3 }}
         className="space-y-3 w-full max-w-sm"
       >
         <Button
-          onClick={onShare}
+          onClick={handleExportAndShare}
+          disabled={exporting}
           className="w-full h-14 bg-primary text-primary-foreground font-bold gap-2 hover:bg-primary/90"
         >
-          <Instagram className="w-5 h-5" />
-          Share to Instagram Story
+          <Share2 className="w-5 h-5" />
+          {exporting ? 'Preparing…' : 'Share'}
         </Button>
         <Button
           variant="outline"
-          onClick={onShare}
-          className="w-full h-12 gap-2"
-        >
-          <Share2 className="w-5 h-5" />
-          Share Elsewhere
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={onShare}
+          onClick={handleDownload}
+          disabled={exporting}
           className="w-full h-12 gap-2"
         >
           <Download className="w-5 h-5" />
-          Download Image
+          Save Image
         </Button>
       </motion.div>
     </div>,

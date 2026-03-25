@@ -123,6 +123,20 @@ Deno.serve(async (req) => {
         const currentStreak = streaks?.[0]?.current_streak || 0
         const longestStreakMonth = Math.max(...(streaks?.map(s => s.longest_streak) || [0]))
 
+        // Compute streak_change vs. previous week's stored recap
+        const prevWeekStart = new Date(lastMonday)
+        prevWeekStart.setDate(prevWeekStart.getDate() - 7)
+        const prevWeekStartStr = prevWeekStart.toISOString().split('T')[0]
+
+        const { data: prevRecap } = await supabase
+          .from('weekly_recaps')
+          .select('current_streak')
+          .eq('user_id', profile.user_id)
+          .eq('week_start', prevWeekStartStr)
+          .maybeSingle()
+
+        const streakChange = prevRecap ? currentStreak - prevRecap.current_streak : 0
+
         // Get group info for the first group
         const { data: memberships } = await supabase
           .from('group_members')
@@ -248,7 +262,7 @@ Deno.serve(async (req) => {
             days_posted: daysPosted,
             day_statuses: dayStatuses,
             current_streak: currentStreak,
-            streak_change: 0, // Would need previous week's data
+            streak_change: streakChange,
             longest_streak_month: longestStreakMonth,
             group_id: groupId,
             group_rank: groupRank,
